@@ -11,8 +11,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] float throwForce = 10f;
     [SerializeField] float spawnDelay = 0.5f;
     [SerializeField] TargetCtrl targetCharacter;
-    [SerializeField] CircleMaskController circleMask;
-    [SerializeField] int targetStuckVal = 10; // 목표 개수
+    [SerializeField] int targetStuckVal = 10;
 
     private StuckObj currentKnife;
     private bool isGameOver = false;
@@ -72,11 +71,13 @@ public class GameManager : MonoBehaviour
             ClearStage();
         }
     }
+
     public void ClearStage()
     {
         Debug.Log("Stage Clear!");
         targetCharacter.ClearStage();
     }
+
     void UpdateUI()
     {
         if (UIManager.Instance != null)
@@ -122,20 +123,22 @@ public class GameManager : MonoBehaviour
 
     IEnumerator FocusAfterExplosion()
     {
-        yield return new WaitForSeconds(0.2f);
+        yield return null;
         FocusOnCharacter();
     }
 
     void FocusOnCharacter()
     {
-        if (targetCharacter != null && circleMask != null)
+        if (targetCharacter != null && UIManager.Instance.circleMask != null)
         {
             Vector3 worldPos = targetCharacter.transform.position;
             Vector2 screenPos = Camera.main.WorldToScreenPoint(worldPos);
 
-            circleMask.ShowAndFocus(screenPos, () =>
+            // CircleMask 애니메이션 완료 후 버튼 표시
+            UIManager.Instance.circleMask.ShowAndFocus(screenPos, () =>
             {
                 Debug.Log("포커스 애니메이션 완료!");
+                UIManager.Instance.ShowButtons();
             });
         }
     }

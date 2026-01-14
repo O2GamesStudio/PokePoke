@@ -37,17 +37,13 @@ public class CircleMaskController : MonoBehaviour
         }
     }
 
-    // 게임오버 시 호출할 메서드
     public void ShowAndFocus(Vector2 screenPos, Action onComplete)
     {
-        // 오브젝트 활성화
         gameObject.SetActive(true);
 
-        // 초기 상태로 리셋 (화면 전체 투명)
         SetRadius(startRadius);
         SetCenterFromScreenPoint(screenPos);
 
-        // 포커스 애니메이션 시작
         if (animCo != null) StopCoroutine(animCo);
         animCo = StartCoroutine(Animate(onComplete));
     }
