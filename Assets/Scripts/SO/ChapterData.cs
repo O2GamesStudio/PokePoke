@@ -1,3 +1,4 @@
+// ChapterData.cs
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "New Chapter Data", menuName = "Game/Chapter Data")]
@@ -6,6 +7,11 @@ public class ChapterData : ScriptableObject
     [System.Serializable]
     public class StageSettings
     {
+        [Header("Visual Settings")]
+        public Sprite bgImage;
+        public Sprite targetImage;
+        public StuckObj stuckObjPrefab;
+
         [Header("Rotation Settings")]
         [HideInInspector] public float minStartSpeed = 0f;
         [HideInInspector] public float maxStartSpeed = 80f;
@@ -29,11 +35,14 @@ public class ChapterData : ScriptableObject
         [Range(0, 20)]
         public int obstacleCount = 0;
         [Range(0, 10)]
-        public int targetPointCount = 0; // 필수 목표 지점 개수
+        public int targetPointCount = 0;
     }
 
+    [Header("Chapter Info")]
     [SerializeField] private string chapterName;
     [SerializeField] private int chapterNumber;
+
+    [Header("Stage Settings")]
     [SerializeField] private StageSettings[] stages = new StageSettings[10];
 
     public string ChapterName => chapterName;

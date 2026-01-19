@@ -384,6 +384,7 @@ MonoBehaviour:
   nextBtn: {fileID: 1797303538}
   exitWinBtn: {fileID: 1179300424}
   screenBtn: {fileID: 1051934991}
+  bgImage: {fileID: 1051934989}
   targetImage: {fileID: 1072490611}
   targetText: {fileID: 826197849}
   stageText: {fileID: 940002591}

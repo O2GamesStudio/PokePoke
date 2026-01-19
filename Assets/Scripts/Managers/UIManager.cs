@@ -11,6 +11,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] Button retryBtn, exitBtn;
     [SerializeField] Button nextBtn, exitWinBtn;
     [SerializeField] Button screenBtn;
+    [SerializeField] Image bgImage;
     [SerializeField] Image targetImage;
     [SerializeField] TextMeshProUGUI targetText;
     [SerializeField] TextMeshProUGUI stageText;
@@ -88,7 +89,13 @@ public class UIManager : MonoBehaviour
         exitSeq.Append(exitBtn.transform.DOLocalMove(exitBtnTargetPos, buttonMoveDuration).SetEase(buttonMoveEase))
                .AppendCallback(() => StartButtonBounce(exitBtn, exitBtnTargetPos));
     }
-
+    public void UpdateBgImage(Sprite newBgSprite)
+    {
+        if (bgImage != null && newBgSprite != null)
+        {
+            bgImage.sprite = newBgSprite;
+        }
+    }
     void StartButtonBounce(Button button, Vector3 targetPos)
     {
         Sequence bounceSeq = DOTween.Sequence();

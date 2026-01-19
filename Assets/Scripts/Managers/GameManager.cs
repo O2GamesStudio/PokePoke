@@ -8,7 +8,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     [Header("Game Objects")]
-    [SerializeField] StuckObj stuckObjPrefab;
+    private StuckObj currentStuckObjPrefab;
     [SerializeField] Transform spawnPoint;
     [SerializeField] TargetCtrl targetCharacter;
 
@@ -65,6 +65,16 @@ public class GameManager : MonoBehaviour
         ChapterData.StageSettings stageSettings = currentChapter.GetStageSettings(currentStageIndex);
         targetStuckVal = stageSettings.requiredKnives;
 
+        currentStuckObjPrefab = stageSettings.stuckObjPrefab;
+
+        if (currentStuckObjPrefab == null)
+        {
+            Debug.LogError($"StuckObj Prefab is not assigned in Stage {currentStageIndex + 1}!");
+            return;
+        }
+
+        ApplyStageVisuals(stageSettings);
+
         if (targetCharacter != null)
         {
             targetCharacter.InitializeStage(stageSettings);
@@ -82,6 +92,22 @@ public class GameManager : MonoBehaviour
         }
 
         UpdateStageText();
+    }
+
+    void ApplyStageVisuals(ChapterData.StageSettings stageSettings)
+    {
+        if (targetCharacter != null && stageSettings.targetImage != null)
+        {
+            SpriteRenderer targetRenderer = targetCharacter.GetComponent<SpriteRenderer>();
+            if (targetRenderer != null)
+            {
+                targetRenderer.sprite = stageSettings.targetImage;
+            }
+        }
+        if (UIManager.Instance != null && stageSettings.bgImage != null)
+        {
+            UIManager.Instance.UpdateBgImage(stageSettings.bgImage);
+        }
     }
     public void OnTargetPointCompleted()
     {
@@ -122,7 +148,7 @@ public class GameManager : MonoBehaviour
             targetRadius = targetCollider.radius * targetCharacter.transform.localScale.x;
         }
 
-        SpriteRenderer knifeSprite = stuckObjPrefab.GetComponent<SpriteRenderer>();
+        SpriteRenderer knifeSprite = currentStuckObjPrefab.GetComponent<SpriteRenderer>();
         float knifeLength = 0f;
 
         if (knifeSprite != null)
@@ -163,7 +189,7 @@ public class GameManager : MonoBehaviour
             Vector3 direction = rotation * Vector3.up;
             Vector3 spawnPosition = targetCharacter.transform.position + direction * (targetRadius + knifeLength);
 
-            StuckObj obstacle = Instantiate(stuckObjPrefab, spawnPosition, rotation);
+            StuckObj obstacle = Instantiate(currentStuckObjPrefab, spawnPosition, rotation);
 
             Vector3 worldPos = obstacle.transform.position;
             Quaternion worldRot = obstacle.transform.rotation;
@@ -178,7 +204,7 @@ public class GameManager : MonoBehaviour
         }
 
         Debug.Log($"Spawned {count} obstacles");
-        return usedAngles; // 사용된 각도 리스트 반환
+        return usedAngles;
     }
 
     void UpdateStageText()
@@ -196,7 +222,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        currentKnife = Instantiate(stuckObjPrefab, spawnPoint.position, Quaternion.identity);
+        currentKnife = Instantiate(currentStuckObjPrefab, spawnPoint.position, Quaternion.identity);
         allKnives.Add(currentKnife);
     }
 
