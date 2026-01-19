@@ -105,8 +105,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameOverVFXCtrl
   maxScale: 1.5
-  scaleDuration: 0.2
-  fadeDuration: 0.2
+  scaleDuration: 0.1
+  fadeDuration: 0.1
   startAlpha: 0
   maxAlpha: 0.5
   endAlpha: 0
