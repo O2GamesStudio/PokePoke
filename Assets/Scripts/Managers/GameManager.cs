@@ -1,3 +1,4 @@
+// GameManager.cs
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
@@ -32,8 +33,6 @@ public class GameManager : MonoBehaviour
     private int stuckAmount = 0;
     private int targetStuckVal = 10;
 
-
-
     void Awake()
     {
         if (Instance == null)
@@ -48,12 +47,14 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        isGameActive = true; // 먼저 활성화
+        isGameActive = true;
         InitializeStage();
         SpawnNewKnife();
         UpdateUI();
     }
+
     public void SetGameActive(bool active) => isGameActive = active;
+
     void InitializeStage()
     {
         if (currentChapter == null)
@@ -109,14 +110,17 @@ public class GameManager : MonoBehaviour
             UIManager.Instance.UpdateBgImage(stageSettings.bgImage);
         }
     }
+
     public void OnTargetPointCompleted()
     {
         Debug.Log("Target point completed!");
     }
+
     public List<StuckObj> GetAllKnives()
     {
         return allKnives;
     }
+
     public void OnKnifeCollision()
     {
         isGameActive = false;
@@ -128,6 +132,7 @@ public class GameManager : MonoBehaviour
         }
         StartCoroutine(GameOverAfterDelay());
     }
+
     IEnumerator GameOverAfterDelay()
     {
         yield return new WaitForSeconds(gameOverDelay);
@@ -148,14 +153,7 @@ public class GameManager : MonoBehaviour
             targetRadius = targetCollider.radius * targetCharacter.transform.localScale.x;
         }
 
-        SpriteRenderer knifeSprite = currentStuckObjPrefab.GetComponent<SpriteRenderer>();
-        float knifeLength = 0f;
-
-        if (knifeSprite != null)
-        {
-            knifeLength = knifeSprite.bounds.size.y * 0.5f;
-        }
-
+        float stickOffset = currentStuckObjPrefab.GetTargetStickOffset();
         float minAngleGap = 15f;
 
         for (int i = 0; i < count; i++)
@@ -185,9 +183,8 @@ public class GameManager : MonoBehaviour
             usedAngles.Add(angle);
 
             Quaternion rotation = Quaternion.Euler(0, 0, angle);
-
             Vector3 direction = rotation * Vector3.up;
-            Vector3 spawnPosition = targetCharacter.transform.position + direction * (targetRadius + knifeLength);
+            Vector3 spawnPosition = targetCharacter.transform.position + direction * (targetRadius + stickOffset);
 
             StuckObj obstacle = Instantiate(currentStuckObjPrefab, spawnPosition, rotation);
 
@@ -286,26 +283,21 @@ public class GameManager : MonoBehaviour
 
         currentStageIndex++;
 
-        // 챕터의 모든 스테이지를 완료한 경우
         if (currentStageIndex >= currentChapter.TotalStages)
         {
             ChapterComplete();
             yield break;
         }
 
-        // 다음 스테이지 로드
         LoadNextStage();
     }
 
     void LoadNextStage()
     {
-        // 모든 칼 제거
         ClearAllKnives();
 
-        // 게임 활성화
         isGameActive = true;
 
-        // 새 스테이지 초기화 (장애물 포함)
         InitializeStage();
         SpawnNewKnife();
         UpdateUI();
@@ -322,7 +314,6 @@ public class GameManager : MonoBehaviour
         }
         allKnives.Clear();
 
-        // 목표 지점도 정리
         if (targetPointManager != null)
         {
             targetPointManager.ClearAllPoints();
@@ -334,7 +325,6 @@ public class GameManager : MonoBehaviour
         Debug.Log($"Chapter {currentChapter.ChapterNumber} Complete!");
         isGameOver = true;
 
-        // 챕터 완료 처리
         if (targetCharacter != null)
         {
             targetCharacter.ClearStage();
@@ -421,19 +411,26 @@ public class GameManager : MonoBehaviour
             });
         }
     }
-
-    public void RestartStage()
+    public void ContinueGame()
     {
-        // DOTween 애니메이션 정리
-        DOTween.KillAll();
-
-        // allKnives 리스트의 모든 칼 제거
-        ClearAllKnives();
-
-        // 게임 활성화
+        isGameOver = false;
         isGameActive = true;
 
-        // 현재 스테이지 재초기화 (장애물 포함)
+        if (targetCharacter != null)
+        {
+            targetCharacter.InitializeStage(currentChapter.GetStageSettings(currentStageIndex));
+        }
+
+        SpawnNewKnife();
+    }
+    public void RestartStage()
+    {
+        DOTween.KillAll();
+
+        ClearAllKnives();
+
+        isGameActive = true;
+
         InitializeStage();
         SpawnNewKnife();
         UpdateUI();

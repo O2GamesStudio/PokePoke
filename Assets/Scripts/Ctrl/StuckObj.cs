@@ -1,4 +1,4 @@
-// StuckObj.cs - 전체 코드
+// StuckObj.cs
 using System.Collections.Generic;
 using System.Collections;
 using UnityEngine;
@@ -22,6 +22,7 @@ public class StuckObj : MonoBehaviour
     private bool isLaunched = false;
     private bool isStuckToTarget = false;
     private bool isFalling = false;
+    private float cachedKnifeLength = -1f;
 
     void Awake()
     {
@@ -30,6 +31,38 @@ public class StuckObj : MonoBehaviour
 
         rb.gravityScale = 0;
         rb.bodyType = RigidbodyType2D.Dynamic;
+    }
+
+    public float GetKnifeLength()
+    {
+        if (cachedKnifeLength > 0)
+        {
+            return cachedKnifeLength;
+        }
+
+        if (col != null)
+        {
+            cachedKnifeLength = col.bounds.size.y * 0.5f;
+        }
+        else
+        {
+            SpriteRenderer sr = GetComponent<SpriteRenderer>();
+            if (sr != null)
+            {
+                cachedKnifeLength = sr.bounds.size.y * 0.5f;
+            }
+            else
+            {
+                cachedKnifeLength = 0.5f;
+            }
+        }
+
+        return cachedKnifeLength;
+    }
+
+    public float GetTargetStickOffset()
+    {
+        return targetStickOffset;
     }
 
     public void Throw(float force)
@@ -146,20 +179,6 @@ public class StuckObj : MonoBehaviour
         }
     }
 
-    void Stick(Transform target)
-    {
-        isStuck = true;
-
-        rb.linearVelocity = Vector2.zero;
-        rb.bodyType = RigidbodyType2D.Kinematic;
-
-        transform.SetParent(target);
-
-        if (target.CompareTag("Target"))
-        {
-            isStuckToTarget = true;
-        }
-    }
 
     public bool IsStuckToTarget()
     {

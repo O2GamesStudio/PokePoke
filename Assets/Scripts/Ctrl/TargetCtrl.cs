@@ -83,7 +83,13 @@ public class TargetCtrl : MonoBehaviour
         reverseWaitTime = settings.reverseWaitTime;
         reverseDirection = settings.reverseDirection;
 
-        // 회전 활성화
+        if (col != null)
+        {
+            col.enabled = true;
+        }
+
+        transform.localScale = originalScale;
+
         isRotating = true;
 
         InitializeRotation();
