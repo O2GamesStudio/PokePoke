@@ -172,18 +172,18 @@ public class TargetCtrl : MonoBehaviour
                 {
                     if (reverseDirection)
                     {
-                        currentDirection *= -1f;
+                        if (Random.value > 0.5f)
+                        {
+                            currentDirection *= -1f;
+                        }
                     }
 
                     targetSpeed = Random.Range(minMaxSpeed, maxMaxSpeed);
                     currentSpeed = Random.Range(minStartSpeed, maxStartSpeed);
 
-                    // 새로운 목표 속도에 비례한 가속도 계산
                     currentSpeedChangeRate = targetSpeed * accelerationRatio;
 
                     rotationState = RotationState.Accelerating;
-
-                    Debug.Log($"Direction changed - New speed: {currentSpeed} -> {targetSpeed}, New acceleration: {currentSpeedChangeRate} ({accelerationRatio * 100}% of target)");
                 }
                 break;
         }

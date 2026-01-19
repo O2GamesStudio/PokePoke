@@ -24,9 +24,14 @@ public class TargetPoint : MonoBehaviour
 
         if (collision.CompareTag("StuckObj"))
         {
+            StuckObj stuckObj = collision.GetComponent<StuckObj>();
+            if (stuckObj != null && stuckObj.IsStuckToTarget())
+            {
+                return;
+            }
+
             isCompleted = true;
             TargetPointManager.Instance?.OnPointCompleted(this);
-            Debug.Log($"Target point {gameObject.name} hit and destroyed!");
             Destroy(gameObject);
         }
     }

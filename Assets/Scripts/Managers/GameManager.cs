@@ -26,6 +26,9 @@ public class GameManager : MonoBehaviour
     [Header("Target Points")]
     [SerializeField] TargetPointManager targetPointManager;
 
+    [Header("Spawn Settings")]
+    [SerializeField] float minDistanceFromTargetPoint = 30f;
+
     private StuckObj currentKnife;
     private bool isGameOver = false;
     private bool isGameActive = false;
@@ -43,6 +46,7 @@ public class GameManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+        Application.targetFrameRate = 60;
     }
 
     void Start()
@@ -156,6 +160,13 @@ public class GameManager : MonoBehaviour
         float stickOffset = currentStuckObjPrefab.GetTargetStickOffset();
         float minAngleGap = 15f;
 
+        // TargetPoint들의 각도 가져오기
+        List<float> targetPointAngles = new List<float>();
+        if (targetPointManager != null)
+        {
+            targetPointAngles = GetTargetPointAngles();
+        }
+
         for (int i = 0; i < count; i++)
         {
             float angle = 0f;
@@ -167,6 +178,8 @@ public class GameManager : MonoBehaviour
             {
                 angle = Random.Range(0f, 360f);
                 validAngle = true;
+
+                // 기존 장애물과의 거리 체크
                 foreach (float usedAngle in usedAngles)
                 {
                     float angleDiff = Mathf.Abs(Mathf.DeltaAngle(angle, usedAngle));
@@ -177,13 +190,27 @@ public class GameManager : MonoBehaviour
                     }
                 }
 
+                // TargetPoint와의 거리 체크
+                if (validAngle)
+                {
+                    foreach (float targetPointAngle in targetPointAngles)
+                    {
+                        float angleDiff = Mathf.Abs(Mathf.DeltaAngle(angle, targetPointAngle));
+                        if (angleDiff < minDistanceFromTargetPoint)
+                        {
+                            validAngle = false;
+                            break;
+                        }
+                    }
+                }
+
                 attempts++;
             }
 
             usedAngles.Add(angle);
 
-            Quaternion rotation = Quaternion.Euler(0, 0, angle);
-            Vector3 direction = rotation * Vector3.up;
+            Quaternion rotation = Quaternion.Euler(0, 0, angle + 180f);
+            Vector3 direction = Quaternion.Euler(0, 0, angle) * Vector3.up;
             Vector3 spawnPosition = targetCharacter.transform.position + direction * (targetRadius + stickOffset);
 
             StuckObj obstacle = Instantiate(currentStuckObjPrefab, spawnPosition, rotation);
@@ -202,6 +229,24 @@ public class GameManager : MonoBehaviour
 
         Debug.Log($"Spawned {count} obstacles");
         return usedAngles;
+    }
+    List<float> GetTargetPointAngles()
+    {
+        List<float> angles = new List<float>();
+
+        if (targetCharacter == null) return angles;
+
+        TargetPoint[] targetPoints = targetCharacter.GetComponentsInChildren<TargetPoint>();
+
+        foreach (TargetPoint point in targetPoints)
+        {
+            Vector3 localPos = point.transform.localPosition;
+            float angle = Mathf.Atan2(localPos.y, localPos.x) * Mathf.Rad2Deg - 90f;
+            if (angle < 0) angle += 360f;
+            angles.Add(angle);
+        }
+
+        return angles;
     }
 
     void UpdateStageText()
@@ -322,7 +367,6 @@ public class GameManager : MonoBehaviour
 
     void ChapterComplete()
     {
-        Debug.Log($"Chapter {currentChapter.ChapterNumber} Complete!");
         isGameOver = true;
 
         if (targetCharacter != null)

@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 96a52498f31affc439f359b6ca755a84
+guid: 7b15d8200acdf2048ba868458102933b
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 5668770040575327728
-    second: spine_0
+      213: -6394528671774096567
+    second: spine_porcupine_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: spine_0
+      name: spine_porcupine_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 40
-        height: 204
+        width: 97
+        height: 372
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0fd7ed541548bae40800000000000000
-      internalID: 5668770040575327728
+      spriteID: 943cadc7d021247a0800000000000000
+      internalID: -6394528671774096567
       vertices: []
       indices: 
       edges: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      spine_0: 5668770040575327728
+      spine_porcupine_0: -6394528671774096567
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

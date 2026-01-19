@@ -13,8 +13,9 @@ public class TargetPointManager : MonoBehaviour
     private int completedPointsCount = 0;
     private int requiredPointsCount = 0;
 
+    [Header("Spawn Settings")]
     [SerializeField] float pointOffset = 2f;
-    [SerializeField] float minAngleGap = 20f;
+    [SerializeField] float minAngleGap = 30f;
 
     void Awake()
     {
@@ -30,7 +31,6 @@ public class TargetPointManager : MonoBehaviour
 
     public void InitializeTargetPoints(int count, List<float> occupiedAngles)
     {
-        // 기존 포인트 정리
         ClearAllPoints();
 
         if (count <= 0 || targetCharacter == null) return;
@@ -38,7 +38,6 @@ public class TargetPointManager : MonoBehaviour
         requiredPointsCount = count;
         completedPointsCount = 0;
 
-        // 타겟의 Collider 반지름 가져오기
         CircleCollider2D targetCollider = targetCharacter.GetComponent<CircleCollider2D>();
         float targetRadius = 1f;
 
@@ -46,6 +45,8 @@ public class TargetPointManager : MonoBehaviour
         {
             targetRadius = targetCollider.radius * targetCharacter.transform.localScale.x;
         }
+
+        List<float> usedAngles = new List<float>(occupiedAngles);
 
         for (int i = 0; i < count; i++)
         {
@@ -59,7 +60,7 @@ public class TargetPointManager : MonoBehaviour
                 angle = Random.Range(0f, 360f);
                 validAngle = true;
 
-                foreach (float usedAngle in occupiedAngles)
+                foreach (float usedAngle in usedAngles)
                 {
                     float angleDiff = Mathf.Abs(Mathf.DeltaAngle(angle, usedAngle));
                     if (angleDiff < minAngleGap)
@@ -72,9 +73,8 @@ public class TargetPointManager : MonoBehaviour
                 attempts++;
             }
 
-            occupiedAngles.Add(angle);
+            usedAngles.Add(angle);
 
-            // 목표 지점 생성
             GameObject pointObj = Instantiate(targetPointPrefab, targetCharacter.transform);
             pointObj.name = $"TargetPoint_{i}";
 
@@ -89,7 +89,6 @@ public class TargetPointManager : MonoBehaviour
                 activePoints.Add(point);
             }
         }
-
     }
 
     public void OnPointCompleted(TargetPoint point)
@@ -97,9 +96,6 @@ public class TargetPointManager : MonoBehaviour
         if (!activePoints.Contains(point)) return;
 
         completedPointsCount++;
-        Debug.Log($"Point completed! {completedPointsCount}/{requiredPointsCount}");
-
-        // GameManager에 알림
         GameManager.Instance?.OnTargetPointCompleted();
     }
 

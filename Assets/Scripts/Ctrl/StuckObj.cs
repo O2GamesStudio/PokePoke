@@ -1,4 +1,3 @@
-// StuckObj.cs
 using System.Collections.Generic;
 using System.Collections;
 using UnityEngine;
@@ -16,6 +15,10 @@ public class StuckObj : MonoBehaviour
     [SerializeField] float fallGravityScale = 2f;
     [SerializeField] float fallRotationSpeed = 360f;
 
+    [Header("Raycast Detection")]
+    [SerializeField] float raycastAheadDistance = 2.0f;
+    [SerializeField] LayerMask stuckObjLayerMask;
+
     private Rigidbody2D rb;
     private Collider2D col;
     private bool isStuck = false;
@@ -23,14 +26,40 @@ public class StuckObj : MonoBehaviour
     private bool isStuckToTarget = false;
     private bool isFalling = false;
     private float cachedKnifeLength = -1f;
+    private bool hasTriggeredGameOver = false;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         col = GetComponent<Collider2D>();
 
+        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         rb.gravityScale = 0;
         rb.bodyType = RigidbodyType2D.Dynamic;
+    }
+
+
+    void TriggerStuckObjCollision(Vector2 contactPoint)
+    {
+        Debug.Log("Ray Detect");
+        if (VFXManager.Instance != null)
+        {
+            GameObject vfxPrefab = VFXManager.Instance.GetGameOverVFX();
+            if (vfxPrefab != null)
+            {
+                Instantiate(vfxPrefab, contactPoint, Quaternion.identity);
+            }
+        }
+
+        GameManager.Instance.OnKnifeCollision();
+
+        if (col != null)
+        {
+            col.enabled = false;
+        }
+
+        StartFalling();
+        IgnoreStuckObjCollisions();
     }
 
     public float GetKnifeLength()
@@ -74,7 +103,6 @@ public class StuckObj : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D co)
     {
-        Debug.Log(co.transform.name);
         if (isLaunched)
         {
             if (co.transform.CompareTag("Border"))
@@ -84,7 +112,7 @@ public class StuckObj : MonoBehaviour
             return;
         }
 
-        if (isStuck || isFalling) return;
+        if (isStuck || isFalling || hasTriggeredGameOver) return;
 
         if (co.transform.CompareTag("Target"))
         {
@@ -100,24 +128,9 @@ public class StuckObj : MonoBehaviour
         }
         else if (co.transform.CompareTag("StuckObj"))
         {
-            if (VFXManager.Instance != null)
-            {
-                GameObject vfxPrefab = VFXManager.Instance.GetGameOverVFX();
-                if (vfxPrefab != null)
-                {
-                    ContactPoint2D contact = co.GetContact(0);
-                    Instantiate(vfxPrefab, contact.point, Quaternion.identity);
-                }
-            }
-
-            GameManager.Instance.OnKnifeCollision();
-
-            if (col != null)
-            {
-                col.enabled = false;
-            }
-            StartFalling();
-            IgnoreStuckObjCollisions();
+            hasTriggeredGameOver = true;
+            ContactPoint2D contact = co.GetContact(0);
+            TriggerStuckObjCollision(contact.point);
         }
     }
 
@@ -159,13 +172,12 @@ public class StuckObj : MonoBehaviour
         ContactPoint2D contact = collision.GetContact(0);
         Vector2 hitPoint = contact.point;
 
-        Vector2 centerToHit = (hitPoint - (Vector2)collision.transform.position).normalized;
+        Vector2 centerToObj = ((Vector2)transform.position - (Vector2)collision.transform.position).normalized;
 
-        float angle = Mathf.Atan2(centerToHit.y, centerToHit.x) * Mathf.Rad2Deg - 90f;
-        transform.rotation = Quaternion.Euler(0, 0, angle);
+        CircleCollider2D targetCollider = collision.transform.GetComponent<CircleCollider2D>();
+        float targetRadius = targetCollider != null ? targetCollider.radius * collision.transform.localScale.x : 1f;
 
-        Vector2 offset = centerToHit * targetStickOffset;
-        transform.position = hitPoint + offset;
+        transform.position = (Vector2)collision.transform.position + centerToObj * (targetRadius + targetStickOffset);
 
         rb.linearVelocity = Vector2.zero;
         rb.angularVelocity = 0f;
@@ -178,7 +190,6 @@ public class StuckObj : MonoBehaviour
             Instantiate(stuckVFXPrefab, hitPoint, Quaternion.identity);
         }
     }
-
 
     public bool IsStuckToTarget()
     {
