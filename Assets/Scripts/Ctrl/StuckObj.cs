@@ -15,10 +15,6 @@ public class StuckObj : MonoBehaviour
     [SerializeField] float fallGravityScale = 2f;
     [SerializeField] float fallRotationSpeed = 360f;
 
-    [Header("Raycast Detection")]
-    [SerializeField] float raycastAheadDistance = 2.0f;
-    [SerializeField] LayerMask stuckObjLayerMask;
-
     private Rigidbody2D rb;
     private Collider2D col;
     private bool isStuck = false;
@@ -41,7 +37,6 @@ public class StuckObj : MonoBehaviour
 
     void TriggerStuckObjCollision(Vector2 contactPoint)
     {
-        Debug.Log("Ray Detect");
         if (VFXManager.Instance != null)
         {
             GameObject vfxPrefab = VFXManager.Instance.GetGameOverVFX();

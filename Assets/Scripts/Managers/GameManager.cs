@@ -227,7 +227,6 @@ public class GameManager : MonoBehaviour
             allKnives.Add(obstacle);
         }
 
-        Debug.Log($"Spawned {count} obstacles");
         return usedAngles;
     }
     List<float> GetTargetPointAngles()

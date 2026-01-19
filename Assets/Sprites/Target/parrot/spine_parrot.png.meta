@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 290ee2c4ea7ac34449892e07bcb33ac1
+guid: 27541b845b02dbb4e9be5e51fa9bd28c
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 719006308181452652
-    second: background_ground_0
+      213: 5683803227749764517
+    second: spine_parrot_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: background_ground_0
+      name: spine_parrot_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1080
-        height: 1920
+        width: 88
+        height: 350
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c67ab668d6c6af900800000000000000
-      internalID: 719006308181452652
+      spriteID: 5ad4e3bebece0ee40800000000000000
+      internalID: 5683803227749764517
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      background_ground_0: 719006308181452652
+      spine_parrot_0: 5683803227749764517
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

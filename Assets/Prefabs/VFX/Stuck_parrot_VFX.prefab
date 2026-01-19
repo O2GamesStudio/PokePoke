@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 4782642174405585121}
   - component: {fileID: 1786095327780071226}
   m_Layer: 0
-  m_Name: Stuck_Porcupine_VFX
+  m_Name: Stuck_parrot_VFX
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -223,7 +223,7 @@ ParticleSystem:
       serializedVersion: 2
       minMaxState: 0
       minColor: {r: 1, g: 1, b: 1, a: 1}
-      maxColor: {r: 0.15686275, g: 0.15294118, b: 0.14117648, a: 1}
+      maxColor: {r: 0.3372549, g: 0.6627451, b: 0.25490198, a: 1}
       maxGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
