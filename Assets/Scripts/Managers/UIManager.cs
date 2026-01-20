@@ -153,12 +153,8 @@ public class UIManager : MonoBehaviour
         targetText.text = nowVal + "/" + targetVal;
     }
 
-    /// <summary>
-    /// Initialize target point icons based on count
-    /// </summary>
     public void InitializeTargetPointUI(int count)
     {
-        // Clear existing icons
         ClearTargetPointUI();
 
         if (targetPointIconPrefab == null || targetPointIconContainer == null)
@@ -177,9 +173,6 @@ public class UIManager : MonoBehaviour
         Debug.Log($"Initialized {count} target point icons");
     }
 
-    /// <summary>
-    /// Remove one target point icon (called when a point is completed)
-    /// </summary>
     public void RemoveTargetPointIcon()
     {
         if (targetPointIcons.Count > 0)
@@ -187,19 +180,13 @@ public class UIManager : MonoBehaviour
             GameObject iconToRemove = targetPointIcons[0];
             targetPointIcons.RemoveAt(0);
 
-            // Animate removal (optional)
             iconToRemove.transform.DOScale(0f, 0.3f).SetEase(Ease.InBack).OnComplete(() =>
             {
                 Destroy(iconToRemove);
             });
 
-            Debug.Log($"Removed target point icon. Remaining: {targetPointIcons.Count}");
         }
     }
-
-    /// <summary>
-    /// Clear all target point icons
-    /// </summary>
     public void ClearTargetPointUI()
     {
         foreach (var icon in targetPointIcons)
