@@ -32,9 +32,15 @@ public class GameManager : MonoBehaviour
     private StuckObj currentKnife;
     private bool isGameOver = false;
     private bool isGameActive = false;
-    private List<StuckObj> allKnives = new List<StuckObj>();
+    private List<StuckObj> allKnives = new List<StuckObj>(50);
     private int stuckAmount = 0;
     private int targetStuckVal = 10;
+    private CircleCollider2D targetCollider;
+    private WaitForSeconds spawnWait;
+    private WaitForSeconds transitionWait;
+    private WaitForSeconds gameOverWait;
+    private List<float> occupiedAngles = new List<float>(20);
+    private Camera mainCam;
 
     void Awake()
     {
@@ -45,8 +51,14 @@ public class GameManager : MonoBehaviour
         else
         {
             Destroy(gameObject);
+            return;
         }
+
         Application.targetFrameRate = 60;
+        mainCam = Camera.main;
+        spawnWait = new WaitForSeconds(spawnDelay);
+        transitionWait = new WaitForSeconds(stageTransitionDelay);
+        gameOverWait = new WaitForSeconds(gameOverDelay);
     }
 
     void Start()
@@ -56,7 +68,6 @@ public class GameManager : MonoBehaviour
         SpawnNewKnife();
         UpdateUI();
 
-        // Load and show banner ad when game starts (in-game only)
         if (GoogleAdmobManager.Instance != null)
         {
             GoogleAdmobManager.Instance.LoadBannerAd();
@@ -67,41 +78,36 @@ public class GameManager : MonoBehaviour
 
     void InitializeStage()
     {
-        if (currentChapter == null)
-        {
-            Debug.LogError("Chapter Data is not assigned!");
-            return;
-        }
+        if (currentChapter == null) return;
 
         ChapterData.StageSettings stageSettings = currentChapter.GetStageSettings(currentStageIndex);
         targetStuckVal = stageSettings.requiredKnives;
-
         currentStuckObjPrefab = stageSettings.stuckObjPrefab;
 
-        if (currentStuckObjPrefab == null)
-        {
-            Debug.LogError($"StuckObj Prefab is not assigned in Stage {currentStageIndex + 1}!");
-            return;
-        }
+        if (currentStuckObjPrefab == null) return;
 
         ApplyStageVisuals(stageSettings);
 
         if (targetCharacter != null)
         {
             targetCharacter.InitializeStage(stageSettings);
+            if (targetCollider == null)
+            {
+                targetCollider = targetCharacter.GetComponent<CircleCollider2D>();
+            }
         }
 
         stuckAmount = 0;
         isGameOver = false;
 
-        List<float> occupiedAngles = SpawnObstacles(stageSettings.obstacleCount);
+        occupiedAngles.Clear();
+        SpawnObstacles(stageSettings.obstacleCount);
 
         if (targetPointManager != null)
         {
             targetPointManager.SetTargetCharacter(targetCharacter);
             targetPointManager.InitializeTargetPoints(stageSettings.targetPointCount, occupiedAngles);
 
-            // Initialize target point UI
             if (UIManager.Instance != null && stageSettings.targetPointCount > 0)
             {
                 UIManager.Instance.InitializeTargetPointUI(stageSettings.targetPointCount);
@@ -115,11 +121,7 @@ public class GameManager : MonoBehaviour
     {
         if (targetCharacter != null && stageSettings.targetImage != null)
         {
-            SpriteRenderer targetRenderer = targetCharacter.GetComponent<SpriteRenderer>();
-            if (targetRenderer != null)
-            {
-                targetRenderer.sprite = stageSettings.targetImage;
-            }
+            targetCharacter.GetComponent<SpriteRenderer>().sprite = stageSettings.targetImage;
         }
         if (UIManager.Instance != null && stageSettings.bgImage != null)
         {
@@ -129,17 +131,13 @@ public class GameManager : MonoBehaviour
 
     public void OnTargetPointCompleted()
     {
-        // Remove one target point icon from UI
         if (UIManager.Instance != null)
         {
             UIManager.Instance.RemoveTargetPointIcon();
         }
     }
 
-    public List<StuckObj> GetAllKnives()
-    {
-        return allKnives;
-    }
+    public List<StuckObj> GetAllKnives() => allKnives;
 
     public void OnKnifeCollision()
     {
@@ -155,59 +153,32 @@ public class GameManager : MonoBehaviour
 
     IEnumerator GameOverAfterDelay()
     {
-        yield return new WaitForSeconds(gameOverDelay);
+        yield return gameOverWait;
         GameOver();
     }
 
-    List<float> SpawnObstacles(int count)
+    void SpawnObstacles(int count)
     {
-        List<float> usedAngles = new List<float>();
+        if (count <= 0 || targetCharacter == null) return;
 
-        if (count <= 0 || targetCharacter == null) return usedAngles;
-
-        CircleCollider2D targetCollider = targetCharacter.GetComponent<CircleCollider2D>();
-        float targetRadius = 1f;
-
-        if (targetCollider != null)
-        {
-            targetRadius = targetCollider.radius * targetCharacter.transform.localScale.x;
-        }
+        float targetRadius = targetCollider != null
+            ? targetCollider.radius * targetCharacter.transform.localScale.x
+            : 1f;
 
         float stickOffset = currentStuckObjPrefab.GetTargetStickOffset();
-        float minAngleGap = 30f;
+        const float minAngleGap = 30f;
+        const int maxAttempts = 100;
 
         for (int i = 0; i < count; i++)
         {
-            float angle = 0f;
-            bool validAngle = false;
-            int maxAttempts = 100;
-            int attempts = 0;
+            float angle = FindValidAngle(minAngleGap, maxAttempts);
+            occupiedAngles.Add(angle);
 
-            while (!validAngle && attempts < maxAttempts)
-            {
-                angle = Random.Range(0f, 360f);
-                validAngle = true;
-
-                foreach (float usedAngle in usedAngles)
-                {
-                    float angleDiff = Mathf.Abs(Mathf.DeltaAngle(angle, usedAngle));
-                    if (angleDiff < minAngleGap)
-                    {
-                        validAngle = false;
-                        break;
-                    }
-                }
-
-                attempts++;
-            }
-
-            usedAngles.Add(angle);
-
-            Vector3 direction = Quaternion.Euler(0, 0, angle) * Vector3.up;
+            Quaternion rotation = Quaternion.Euler(0, 0, angle);
+            Vector3 direction = rotation * Vector3.up;
             Vector3 spawnPosition = targetCharacter.transform.position + direction * (targetRadius + stickOffset);
 
             StuckObj obstacle = LeanPool.Spawn(currentStuckObjPrefab, spawnPosition, Quaternion.identity);
-
             obstacle.transform.SetParent(targetCharacter.transform);
 
             Vector3 localDir = obstacle.transform.parent.InverseTransformDirection(direction);
@@ -219,14 +190,36 @@ public class GameManager : MonoBehaviour
 
             allKnives.Add(obstacle);
         }
+    }
 
-        return usedAngles;
+    float FindValidAngle(float minGap, int maxAttempts)
+    {
+        float angle = Random.Range(0f, 360f);
+        int count = occupiedAngles.Count;
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            bool valid = true;
+
+            for (int i = 0; i < count; i++)
+            {
+                if (Mathf.Abs(Mathf.DeltaAngle(angle, occupiedAngles[i])) < minGap)
+                {
+                    valid = false;
+                    break;
+                }
+            }
+
+            if (valid) return angle;
+            angle = Random.Range(0f, 360f);
+        }
+
+        return angle;
     }
 
     List<float> GetTargetPointAngles()
     {
         List<float> angles = new List<float>();
-
         if (targetCharacter == null) return angles;
 
         TargetPoint[] targetPoints = targetCharacter.GetComponentsInChildren<TargetPoint>();
@@ -252,16 +245,10 @@ public class GameManager : MonoBehaviour
 
     void SpawnNewKnife()
     {
-        if (isGameOver || !isGameActive || currentStuckObjPrefab == null || spawnPoint == null)
-        {
-            return;
-        }
+        if (isGameOver || !isGameActive || currentStuckObjPrefab == null || spawnPoint == null) return;
 
         currentKnife = LeanPool.Spawn(currentStuckObjPrefab, spawnPoint.position, Quaternion.identity);
-
-        if (currentKnife == null) return;
-
-        allKnives.Add(currentKnife);
+        if (currentKnife != null) allKnives.Add(currentKnife);
     }
 
     public void OnClick()
@@ -270,38 +257,35 @@ public class GameManager : MonoBehaviour
         {
             currentKnife.Throw(throwForce);
             currentKnife = null;
-
             StartCoroutine(SpawnKnifeAfterDelay());
         }
     }
 
     IEnumerator SpawnKnifeAfterDelay()
     {
-        yield return new WaitForSeconds(spawnDelay);
+        yield return spawnWait;
         SpawnNewKnife();
     }
 
-    public void OnKnifeStuck()
+    public void OnKnifeStuck(StuckObj knife)
     {
+        if (isGameOver) return;
+
         stuckAmount++;
         UpdateUI();
 
         if (stuckAmount >= targetStuckVal)
         {
+            if (targetPointManager != null && !targetPointManager.AreAllPointsCompleted())
+            {
+                return;
+            }
             StageComplete();
         }
     }
 
     void StageComplete()
     {
-        if (targetPointManager != null && targetPointManager.GetRequiredCount() > 0)
-        {
-            if (!targetPointManager.AreAllPointsCompleted())
-            {
-                return;
-            }
-        }
-
         isGameActive = false;
 
         if (currentKnife != null)
@@ -320,7 +304,7 @@ public class GameManager : MonoBehaviour
 
     IEnumerator TransitionToNextStage()
     {
-        yield return new WaitForSeconds(stageTransitionDelay);
+        yield return transitionWait;
 
         currentStageIndex++;
 
@@ -336,9 +320,7 @@ public class GameManager : MonoBehaviour
     void LoadNextStage()
     {
         ClearAllKnives();
-
         isGameActive = true;
-
         InitializeStage();
         SpawnNewKnife();
         UpdateUI();
@@ -346,12 +328,12 @@ public class GameManager : MonoBehaviour
 
     void ClearAllKnives()
     {
-        foreach (var knife in allKnives)
+        for (int i = allKnives.Count - 1; i >= 0; i--)
         {
-            if (knife != null)
+            if (allKnives[i] != null)
             {
-                knife.transform.SetParent(null);
-                LeanPool.Despawn(knife);
+                allKnives[i].transform.SetParent(null);
+                LeanPool.Despawn(allKnives[i]);
             }
         }
         allKnives.Clear();
@@ -359,13 +341,12 @@ public class GameManager : MonoBehaviour
         if (targetCharacter != null)
         {
             StuckObj[] remainingKnives = targetCharacter.GetComponentsInChildren<StuckObj>();
-
-            foreach (StuckObj knife in remainingKnives)
+            for (int i = 0; i < remainingKnives.Length; i++)
             {
-                if (knife != null)
+                if (remainingKnives[i] != null)
                 {
-                    knife.transform.SetParent(null);
-                    LeanPool.Despawn(knife);
+                    remainingKnives[i].transform.SetParent(null);
+                    LeanPool.Despawn(remainingKnives[i]);
                 }
             }
         }
@@ -375,7 +356,6 @@ public class GameManager : MonoBehaviour
             targetPointManager.ClearAllPoints();
         }
 
-        // Clear target point UI
         if (UIManager.Instance != null)
         {
             UIManager.Instance.ClearTargetPointUI();
@@ -420,20 +400,19 @@ public class GameManager : MonoBehaviour
     void DisableKnifeCollisions()
     {
         allKnives.RemoveAll(knife => knife == null);
+        int count = allKnives.Count;
 
-        for (int i = 0; i < allKnives.Count; i++)
+        for (int i = 0; i < count - 1; i++)
         {
-            for (int j = i + 1; j < allKnives.Count; j++)
-            {
-                if (allKnives[i] != null && allKnives[j] != null)
-                {
-                    Collider2D col1 = allKnives[i].GetCollider();
-                    Collider2D col2 = allKnives[j].GetCollider();
+            Collider2D col1 = allKnives[i].GetCollider();
+            if (col1 == null) continue;
 
-                    if (col1 != null && col2 != null)
-                    {
-                        Physics2D.IgnoreCollision(col1, col2, true);
-                    }
+            for (int j = i + 1; j < count; j++)
+            {
+                Collider2D col2 = allKnives[j].GetCollider();
+                if (col2 != null)
+                {
+                    Physics2D.IgnoreCollision(col1, col2, true);
                 }
             }
         }
@@ -449,9 +428,7 @@ public class GameManager : MonoBehaviour
     {
         if (targetCharacter != null && UIManager.Instance.circleMask != null)
         {
-            Vector3 worldPos = targetCharacter.transform.position;
-            Vector2 screenPos = Camera.main.WorldToScreenPoint(worldPos);
-
+            Vector2 screenPos = mainCam.WorldToScreenPoint(targetCharacter.transform.position);
             UIManager.Instance.circleMask.ShowAndFocus(screenPos, () =>
             {
                 UIManager.Instance.ShowWinUI();
@@ -463,9 +440,7 @@ public class GameManager : MonoBehaviour
     {
         if (targetCharacter != null && UIManager.Instance.circleMask != null)
         {
-            Vector3 worldPos = targetCharacter.transform.position;
-            Vector2 screenPos = Camera.main.WorldToScreenPoint(worldPos);
-
+            Vector2 screenPos = mainCam.WorldToScreenPoint(targetCharacter.transform.position);
             UIManager.Instance.circleMask.ShowAndFocus(screenPos, () =>
             {
                 UIManager.Instance.ShowLoseUI();
@@ -473,63 +448,30 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Continue game after watching rewarded ad
-    /// Called from UIManager's ContinueOnClick
-    /// </summary>
     public void OnContinueButtonPressed()
     {
         if (GoogleAdmobManager.Instance != null)
         {
-            // Check if rewarded ad is ready
             if (GoogleAdmobManager.Instance.IsRewardedAdReady())
             {
-                // Show rewarded ad
                 GoogleAdmobManager.Instance.ShowRewardedAd(
-                    onCompleted: () =>
-                    {
-                        // Ad watched successfully - continue game
-                        Debug.Log("Rewarded ad watched - continuing game");
-                        ContinueGameAfterAd();
-                    },
-                    onFailed: () =>
-                    {
-                        // Ad failed or user closed early
-                        Debug.Log("Rewarded ad failed or closed early");
-                        // Optionally show a message to the user
-                        if (UIManager.Instance != null)
-                        {
-                            Debug.Log("Please watch the ad to continue");
-                        }
-                    }
+                    onCompleted: ContinueGameAfterAd,
+                    onFailed: null
                 );
             }
             else
             {
-                // Ad not ready - optionally allow continue anyway or show message
-                Debug.LogWarning("Rewarded ad not ready yet");
-
-                // Option 1: Allow continue anyway (generous to player)
                 ContinueGameAfterAd();
-
-                // Option 2: Show message and don't allow continue (uncomment if preferred)
-                // if (UIManager.Instance != null)
-                // {
-                //     Debug.Log("Ad not ready, please try again");
-                // }
             }
         }
         else
         {
-            // AdMob Manager not available - allow continue anyway
-            Debug.LogWarning("GoogleAdmobManager not found - continuing without ad");
             ContinueGameAfterAd();
         }
     }
 
-    private void ContinueGameAfterAd()
+    void ContinueGameAfterAd()
     {
-        // UI 정리
         if (UIManager.Instance != null)
         {
             UIManager.Instance.ContinueGameUI();
@@ -544,7 +486,6 @@ public class GameManager : MonoBehaviour
         if (currentChapter == null) return;
 
         ChapterData.StageSettings stageSettings = currentChapter.GetStageSettings(currentStageIndex);
-
         currentStuckObjPrefab = stageSettings.stuckObjPrefab;
 
         if (currentStuckObjPrefab == null) return;
@@ -554,7 +495,8 @@ public class GameManager : MonoBehaviour
             targetCharacter.InitializeStage(stageSettings);
         }
 
-        List<float> occupiedAngles = SpawnObstacles(stageSettings.obstacleCount);
+        occupiedAngles.Clear();
+        SpawnObstacles(stageSettings.obstacleCount);
 
         if (targetPointManager != null)
         {
@@ -569,12 +511,9 @@ public class GameManager : MonoBehaviour
     public void RestartStage()
     {
         DOTween.KillAll();
-
         ClearAllKnives();
-
         isGameActive = true;
         isGameOver = false;
-
         InitializeStage();
         SpawnNewKnife();
         UpdateUI();

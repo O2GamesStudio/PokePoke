@@ -38,12 +38,14 @@ public class UIManager : MonoBehaviour
     [SerializeField] GameObject targetPointIconPrefab;
     [SerializeField] Transform targetPointIconContainer;
 
-    private List<GameObject> targetPointIcons = new List<GameObject>();
+    private List<GameObject> targetPointIcons = new List<GameObject>(10);
 
     public CircleMaskController circleMask;
 
     private Vector3 nextBtnHiddenPos, exitWinBtnHiddenPos;
     private Vector3 nextBtnTargetPos, exitWinBtnTargetPos;
+    private static readonly Vector3 zeroScale = Vector3.zero;
+    private static readonly Vector3 oneScale = Vector3.one;
 
     void Awake()
     {
@@ -54,6 +56,7 @@ public class UIManager : MonoBehaviour
         else
         {
             Destroy(gameObject);
+            return;
         }
 
         screenBtn.onClick.AddListener(ScreenOnClick);
@@ -69,9 +72,9 @@ public class UIManager : MonoBehaviour
         nextBtnTargetPos = nextBtnHiddenPos + new Vector3(0, buttonMoveDistance, 0);
         exitWinBtnTargetPos = exitWinBtnHiddenPos + new Vector3(0, buttonMoveDistance, 0);
 
-        retryBtn.transform.localScale = Vector3.zero;
-        exitBtn.transform.localScale = Vector3.zero;
-        continueBtn.transform.localScale = Vector3.zero;
+        retryBtn.transform.localScale = zeroScale;
+        exitBtn.transform.localScale = zeroScale;
+        continueBtn.transform.localScale = zeroScale;
     }
 
     public void UpdateStageText(int stageNumber)
@@ -84,44 +87,39 @@ public class UIManager : MonoBehaviour
 
     public void ShowWinUI()
     {
-        Sequence nextSeq = DOTween.Sequence();
-        Sequence exitSeq = DOTween.Sequence();
+        nextBtn.transform.DOLocalMove(nextBtnTargetPos, buttonMoveDuration)
+            .SetEase(buttonMoveEase)
+            .OnComplete(() => StartButtonBounce(nextBtn, nextBtnTargetPos));
 
-        nextSeq.Append(nextBtn.transform.DOLocalMove(nextBtnTargetPos, buttonMoveDuration).SetEase(buttonMoveEase))
-                .AppendCallback(() => StartButtonBounce(nextBtn, nextBtnTargetPos));
-
-        exitSeq.Append(exitWinBtn.transform.DOLocalMove(exitWinBtnTargetPos, buttonMoveDuration).SetEase(buttonMoveEase))
-               .AppendCallback(() => StartButtonBounce(exitWinBtn, exitWinBtnTargetPos));
+        exitWinBtn.transform.DOLocalMove(exitWinBtnTargetPos, buttonMoveDuration)
+            .SetEase(buttonMoveEase)
+            .OnComplete(() => StartButtonBounce(exitWinBtn, exitWinBtnTargetPos));
     }
 
     public void ShowLoseUI()
     {
-        continueBtn.transform.localScale = Vector3.zero;
-        retryBtn.transform.localScale = Vector3.zero;
-        exitBtn.transform.localScale = Vector3.zero;
+        continueBtn.transform.localScale = zeroScale;
+        retryBtn.transform.localScale = zeroScale;
+        exitBtn.transform.localScale = zeroScale;
 
         StartMainButtonScaleAnimation(continueBtn);
         StartMainButtonScaleAnimation(retryBtn);
 
-        float mainButtonTotalDuration = scaleUpDuration + scaleDownDuration;
-        DOVirtual.DelayedCall(mainButtonTotalDuration + exitButtonDelay, () =>
-        {
-            StartExitButtonScaleAnimation(exitBtn);
-        });
+        DOVirtual.DelayedCall(scaleUpDuration + scaleDownDuration + exitButtonDelay,
+            () => StartExitButtonScaleAnimation(exitBtn));
     }
 
     void StartMainButtonScaleAnimation(Button button)
     {
-        button.transform.localScale = Vector3.zero;
-
-        Sequence scaleSeq = DOTween.Sequence();
-        scaleSeq.Append(button.transform.DOScale(scaleUpValue, scaleUpDuration).SetEase(Ease.OutBack));
-        scaleSeq.Append(button.transform.DOScale(1f, scaleDownDuration).SetEase(Ease.InOutQuad));
+        button.transform.localScale = zeroScale;
+        button.transform.DOScale(scaleUpValue, scaleUpDuration)
+            .SetEase(Ease.OutBack)
+            .OnComplete(() => button.transform.DOScale(1f, scaleDownDuration).SetEase(Ease.InOutQuad));
     }
 
     void StartExitButtonScaleAnimation(Button button)
     {
-        button.transform.localScale = Vector3.zero;
+        button.transform.localScale = zeroScale;
         button.transform.DOScale(1f, exitButtonScaleDuration).SetEase(Ease.OutQuad);
     }
 
@@ -135,65 +133,57 @@ public class UIManager : MonoBehaviour
 
     void StartButtonBounce(Button button, Vector3 targetPos)
     {
-        Sequence bounceSeq = DOTween.Sequence();
+        Vector3 upPos = targetPos;
+        upPos.y += bounceUpAmount;
 
-        Vector3 upPos = targetPos + new Vector3(0, bounceUpAmount, 0);
-        bounceSeq.Append(button.transform.DOLocalMove(upPos, bounceDuration).SetEase(Ease.OutQuad));
-        bounceSeq.Append(button.transform.DOLocalMove(targetPos, bounceDuration).SetEase(Ease.OutQuad));
+        button.transform.DOLocalMove(upPos, bounceDuration)
+            .SetEase(Ease.OutQuad)
+            .OnComplete(() => button.transform.DOLocalMove(targetPos, bounceDuration).SetEase(Ease.OutQuad));
     }
 
     public void TargetUIUpdate(int targetVal, int nowVal)
     {
-        float targetFillAmount = (float)nowVal / targetVal;
+        int clampedVal = Mathf.Min(nowVal, targetVal);
+        float targetFillAmount = (float)clampedVal / targetVal;
 
         targetImage.DOKill();
-        targetImage.DOFillAmount(targetFillAmount, fillDuration)
-            .SetEase(fillEase);
+        targetImage.DOFillAmount(targetFillAmount, fillDuration).SetEase(fillEase);
 
-        targetText.text = nowVal + "/" + targetVal;
+        targetText.text = clampedVal + "/" + targetVal;
     }
 
     public void InitializeTargetPointUI(int count)
     {
         ClearTargetPointUI();
 
-        if (targetPointIconPrefab == null || targetPointIconContainer == null)
-        {
-            Debug.LogWarning("TargetPoint UI not set up - prefab or container missing");
-            return;
-        }
+        if (targetPointIconPrefab == null || targetPointIconContainer == null) return;
 
-        // Create icons for each target point
         for (int i = 0; i < count; i++)
         {
             GameObject icon = Instantiate(targetPointIconPrefab, targetPointIconContainer);
             targetPointIcons.Add(icon);
         }
-
-        Debug.Log($"Initialized {count} target point icons");
     }
 
     public void RemoveTargetPointIcon()
     {
-        if (targetPointIcons.Count > 0)
-        {
-            GameObject iconToRemove = targetPointIcons[0];
-            targetPointIcons.RemoveAt(0);
+        if (targetPointIcons.Count == 0) return;
 
-            iconToRemove.transform.DOScale(0f, 0.3f).SetEase(Ease.InBack).OnComplete(() =>
-            {
-                Destroy(iconToRemove);
-            });
+        GameObject iconToRemove = targetPointIcons[0];
+        targetPointIcons.RemoveAt(0);
 
-        }
+        iconToRemove.transform.DOScale(0f, 0.3f)
+            .SetEase(Ease.InBack)
+            .OnComplete(() => Destroy(iconToRemove));
     }
+
     public void ClearTargetPointUI()
     {
-        foreach (var icon in targetPointIcons)
+        for (int i = targetPointIcons.Count - 1; i >= 0; i--)
         {
-            if (icon != null)
+            if (targetPointIcons[i] != null)
             {
-                Destroy(icon);
+                Destroy(targetPointIcons[i]);
             }
         }
         targetPointIcons.Clear();
@@ -201,31 +191,22 @@ public class UIManager : MonoBehaviour
 
     void ContinueOnClick()
     {
-        // GameManager의 보상형 광고 로직 호출
         if (GameManager.Instance != null)
         {
             GameManager.Instance.OnContinueButtonPressed();
         }
     }
 
-    /// <summary>
-    /// Continue game UI cleanup (called by GameManager after ad)
-    /// </summary>
     public void ContinueGameUI()
     {
         DOTween.KillAll();
-
         circleMask.Hide();
-
-        retryBtn.transform.localScale = Vector3.zero;
-        exitBtn.transform.localScale = Vector3.zero;
-        continueBtn.transform.localScale = Vector3.zero;
+        retryBtn.transform.localScale = zeroScale;
+        exitBtn.transform.localScale = zeroScale;
+        continueBtn.transform.localScale = zeroScale;
     }
 
-    void NextOnClick()
-    {
-
-    }
+    void NextOnClick() { }
 
     void ExitOnClick()
     {
@@ -239,23 +220,23 @@ public class UIManager : MonoBehaviour
 
         int scene1Index = -1;
         int scene2Index = -1;
+        int sceneCount = SceneManager.sceneCount;
 
-        for (int i = 0; i < SceneManager.sceneCount; i++)
+        for (int i = 0; i < sceneCount; i++)
         {
-            Scene scene = SceneManager.GetSceneAt(i);
-            int buildIndex = scene.buildIndex;
+            int buildIndex = SceneManager.GetSceneAt(i).buildIndex;
 
             if (scene1Index == -1)
                 scene1Index = buildIndex;
             else if (scene2Index == -1)
+            {
                 scene2Index = buildIndex;
+                break;
+            }
         }
 
         SceneLoader.LoadGameScenes(scene1Index, scene2Index);
     }
 
-    void ScreenOnClick()
-    {
-        GameManager.Instance.OnClick();
-    }
+    void ScreenOnClick() => GameManager.Instance?.OnClick();
 }

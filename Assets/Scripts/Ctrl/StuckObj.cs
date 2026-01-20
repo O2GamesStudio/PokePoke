@@ -29,6 +29,8 @@ public class StuckObj : MonoBehaviour, IPoolable
     private bool isFalling = false;
     private float cachedKnifeLength = -1f;
     private bool hasTriggeredGameOver = false;
+    private WaitForSeconds despawnWait;
+    private static readonly Vector2 zeroVelocity = Vector2.zero;
 
     void Awake()
     {
@@ -38,6 +40,8 @@ public class StuckObj : MonoBehaviour, IPoolable
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         rb.gravityScale = 0;
         rb.bodyType = RigidbodyType2D.Dynamic;
+
+        despawnWait = new WaitForSeconds(despawnDelay);
     }
 
     void OnEnable()
@@ -60,11 +64,17 @@ public class StuckObj : MonoBehaviour, IPoolable
         if (GameManager.Instance != null && col != null)
         {
             List<StuckObj> allKnives = GameManager.Instance.GetAllKnives();
-            foreach (StuckObj other in allKnives)
+            int count = allKnives.Count;
+
+            for (int i = 0; i < count; i++)
             {
-                if (other != null && other != this && other.GetCollider() != null)
+                if (allKnives[i] != null && allKnives[i] != this)
                 {
-                    Physics2D.IgnoreCollision(col, other.GetCollider(), false);
+                    Collider2D otherCol = allKnives[i].GetCollider();
+                    if (otherCol != null)
+                    {
+                        Physics2D.IgnoreCollision(col, otherCol, false);
+                    }
                 }
             }
         }
@@ -89,7 +99,7 @@ public class StuckObj : MonoBehaviour, IPoolable
         {
             rb.bodyType = RigidbodyType2D.Dynamic;
             rb.gravityScale = 0;
-            rb.linearVelocity = Vector2.zero;
+            rb.linearVelocity = zeroVelocity;
             rb.angularVelocity = 0f;
             rb.constraints = RigidbodyConstraints2D.None;
             rb.isKinematic = false;
@@ -111,7 +121,7 @@ public class StuckObj : MonoBehaviour, IPoolable
         if (rb != null)
         {
             rb.bodyType = RigidbodyType2D.Kinematic;
-            rb.linearVelocity = Vector2.zero;
+            rb.linearVelocity = zeroVelocity;
             rb.angularVelocity = 0f;
         }
     }
@@ -145,10 +155,7 @@ public class StuckObj : MonoBehaviour, IPoolable
 
     public float GetKnifeLength()
     {
-        if (cachedKnifeLength > 0)
-        {
-            return cachedKnifeLength;
-        }
+        if (cachedKnifeLength > 0) return cachedKnifeLength;
 
         if (col != null)
         {
@@ -157,23 +164,13 @@ public class StuckObj : MonoBehaviour, IPoolable
         else
         {
             SpriteRenderer sr = GetComponent<SpriteRenderer>();
-            if (sr != null)
-            {
-                cachedKnifeLength = sr.bounds.size.y * 0.5f;
-            }
-            else
-            {
-                cachedKnifeLength = 0.5f;
-            }
+            cachedKnifeLength = sr != null ? sr.bounds.size.y * 0.5f : 0.5f;
         }
 
         return cachedKnifeLength;
     }
 
-    public float GetTargetStickOffset()
-    {
-        return targetStickOffset;
-    }
+    public float GetTargetStickOffset() => targetStickOffset;
 
     public void Throw(float force)
     {
@@ -210,34 +207,29 @@ public class StuckObj : MonoBehaviour, IPoolable
                 targetCtrl.OnKnifeHit();
             }
 
-            GameManager.Instance.OnKnifeStuck();
+            GameManager.Instance.OnKnifeStuck(this);
         }
         else if (co.transform.CompareTag("StuckObj"))
         {
             hasTriggeredGameOver = true;
-            ContactPoint2D contact = co.GetContact(0);
-            TriggerStuckObjCollision(contact.point);
+            TriggerStuckObjCollision(co.GetContact(0).point);
         }
     }
 
     void StartFalling()
     {
         isFalling = true;
-
         rb.gravityScale = fallGravityScale;
         rb.bodyType = RigidbodyType2D.Dynamic;
+        rb.angularVelocity = fallRotationSpeed * (Random.value > 0.5f ? 1f : -1f);
+        rb.linearVelocity = zeroVelocity;
 
-        float rotationDirection = Random.value > 0.5f ? 1f : -1f;
-        rb.angularVelocity = fallRotationSpeed * rotationDirection;
-
-        rb.linearVelocity = new Vector2(0f, 0f);
-
-        StartCoroutine(DespawnAfterDelay(despawnDelay));
+        StartCoroutine(DespawnAfterDelay());
     }
 
-    IEnumerator DespawnAfterDelay(float delay)
+    IEnumerator DespawnAfterDelay()
     {
-        yield return new WaitForSeconds(delay);
+        yield return despawnWait;
         LeanPool.Despawn(gameObject);
     }
 
@@ -246,12 +238,17 @@ public class StuckObj : MonoBehaviour, IPoolable
         if (GameManager.Instance == null) return;
 
         List<StuckObj> allKnives = GameManager.Instance.GetAllKnives();
+        int count = allKnives.Count;
 
-        foreach (StuckObj other in allKnives)
+        for (int i = 0; i < count; i++)
         {
-            if (other != null && other != this && other.GetCollider() != null)
+            if (allKnives[i] != null && allKnives[i] != this)
             {
-                Physics2D.IgnoreCollision(col, other.GetCollider(), true);
+                Collider2D otherCol = allKnives[i].GetCollider();
+                if (otherCol != null)
+                {
+                    Physics2D.IgnoreCollision(col, otherCol, true);
+                }
             }
         }
     }
@@ -267,11 +264,13 @@ public class StuckObj : MonoBehaviour, IPoolable
         Vector2 centerToObj = ((Vector2)transform.position - (Vector2)collision.transform.position).normalized;
 
         CircleCollider2D targetCollider = collision.transform.GetComponent<CircleCollider2D>();
-        float targetRadius = targetCollider != null ? targetCollider.radius * collision.transform.localScale.x : 1f;
+        float targetRadius = targetCollider != null
+            ? targetCollider.radius * collision.transform.localScale.x
+            : 1f;
 
         transform.position = (Vector2)collision.transform.position + centerToObj * (targetRadius + targetStickOffset);
 
-        rb.linearVelocity = Vector2.zero;
+        rb.linearVelocity = zeroVelocity;
         rb.angularVelocity = 0f;
         rb.bodyType = RigidbodyType2D.Kinematic;
 
@@ -283,10 +282,7 @@ public class StuckObj : MonoBehaviour, IPoolable
         }
     }
 
-    public bool IsStuckToTarget()
-    {
-        return isStuckToTarget;
-    }
+    public bool IsStuckToTarget() => isStuckToTarget;
 
     void StickToBorder(Collision2D collision)
     {
@@ -296,12 +292,11 @@ public class StuckObj : MonoBehaviour, IPoolable
         Vector2 hitPoint = contact.point;
         Vector2 hitNormal = contact.normal;
 
-        rb.linearVelocity = Vector2.zero;
+        rb.linearVelocity = zeroVelocity;
         rb.angularVelocity = 0f;
         rb.bodyType = RigidbodyType2D.Kinematic;
 
-        Vector2 offset = -hitNormal * borderStickOffset;
-        transform.position = hitPoint + offset;
+        transform.position = hitPoint - hitNormal * borderStickOffset;
     }
 
     public void Launch(Vector2 direction, float force)
@@ -318,14 +313,10 @@ public class StuckObj : MonoBehaviour, IPoolable
     public void StickAsObstacle(Transform target)
     {
         isStuck = true;
-
-        rb.linearVelocity = Vector2.zero;
+        rb.linearVelocity = zeroVelocity;
         rb.angularVelocity = 0f;
         rb.bodyType = RigidbodyType2D.Kinematic;
     }
 
-    public Collider2D GetCollider()
-    {
-        return col;
-    }
+    public Collider2D GetCollider() => col;
 }

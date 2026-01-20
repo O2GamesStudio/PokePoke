@@ -46,13 +46,13 @@ public class TargetCtrl : MonoBehaviour
     private float targetSpeed;
     private float currentDirection;
 
-
     private enum RotationState { Accelerating, Holding, Decelerating, Waiting }
     private RotationState rotationState = RotationState.Accelerating;
 
     private float holdTimer = 0f;
     private float targetHoldTime = 0f;
     private float waitTimer = 0f;
+    private static readonly Vector2 zeroVelocity = Vector2.zero;
 
     void Awake()
     {
@@ -89,7 +89,6 @@ public class TargetCtrl : MonoBehaviour
         }
 
         transform.localScale = originalScale;
-
         isRotating = true;
 
         InitializeRotation();
@@ -99,14 +98,10 @@ public class TargetCtrl : MonoBehaviour
     {
         currentSpeed = Random.Range(minStartSpeed, maxStartSpeed);
         targetSpeed = Random.Range(minMaxSpeed, maxMaxSpeed);
-
-        // 목표 속도에 비례한 가속도 계산
         currentSpeedChangeRate = targetSpeed * accelerationRatio;
 
-        bool randomDirection = Random.value > 0.5f;
         currentDirection = rotateClockwise ? -1f : 1f;
-
-        if (randomDirection)
+        if (Random.value > 0.5f)
         {
             currentDirection *= -1f;
         }
@@ -171,17 +166,13 @@ public class TargetCtrl : MonoBehaviour
 
                 if (waitTimer >= reverseWaitTime)
                 {
-                    if (reverseDirection)
+                    if (reverseDirection && Random.value > 0.5f)
                     {
-                        if (Random.value > 0.5f)
-                        {
-                            currentDirection *= -1f;
-                        }
+                        currentDirection *= -1f;
                     }
 
                     targetSpeed = Random.Range(minMaxSpeed, maxMaxSpeed);
                     currentSpeed = Random.Range(minStartSpeed, maxStartSpeed);
-
                     currentSpeedChangeRate = targetSpeed * accelerationRatio;
 
                     rotationState = RotationState.Accelerating;
@@ -196,33 +187,27 @@ public class TargetCtrl : MonoBehaviour
         {
             spriteRenderer.DOKill();
             spriteRenderer.DOFade(hitAlphaValue, hitFadeDuration)
-                .OnComplete(() =>
-                {
-                    spriteRenderer.DOFade(1f, hitFadeDuration);
-                });
+                .OnComplete(() => spriteRenderer.DOFade(1f, hitFadeDuration));
         }
 
-        // Y축 펀치 효과
+        float halfDuration = hitPunchDuration * 0.5f;
+        float targetY = transform.position.y;
+
         transform.DOKill();
-        transform.DOMoveY(transform.position.y + hitPunchY, hitPunchDuration * 0.5f)
+        transform.DOMoveY(targetY + hitPunchY, halfDuration)
             .SetEase(Ease.OutQuad)
-            .OnComplete(() =>
-            {
-                transform.DOMoveY(transform.position.y - hitPunchY, hitPunchDuration * 0.5f)
-                    .SetEase(Ease.InQuad);
-            });
+            .OnComplete(() => transform.DOMoveY(targetY, halfDuration).SetEase(Ease.InQuad));
     }
 
     public void OnGameOverHit()
     {
+        float halfDuration = gameOverPunchDuration * 0.5f;
+        float targetY = transform.position.y;
+
         transform.DOKill();
-        transform.DOMoveY(transform.position.y + gameOverPunchY, gameOverPunchDuration * 0.5f)
+        transform.DOMoveY(targetY + gameOverPunchY, halfDuration)
             .SetEase(Ease.OutQuad)
-            .OnComplete(() =>
-            {
-                transform.DOMoveY(transform.position.y - gameOverPunchY, gameOverPunchDuration * 0.5f)
-                    .SetEase(Ease.InQuad);
-            });
+            .OnComplete(() => transform.DOMoveY(targetY, halfDuration).SetEase(Ease.InQuad));
     }
 
     public void ClearStage()
@@ -230,17 +215,17 @@ public class TargetCtrl : MonoBehaviour
         StopRotation();
 
         StuckObj[] stuckKnives = GetComponentsInChildren<StuckObj>();
-        foreach (StuckObj knife in stuckKnives)
+        for (int i = 0; i < stuckKnives.Length; i++)
         {
-            if (knife != null)
+            if (stuckKnives[i] != null)
             {
-                knife.transform.SetParent(null);
+                stuckKnives[i].transform.SetParent(null);
 
-                Rigidbody2D knifeRb = knife.GetComponent<Rigidbody2D>();
+                Rigidbody2D knifeRb = stuckKnives[i].GetComponent<Rigidbody2D>();
                 if (knifeRb != null)
                 {
                     knifeRb.bodyType = RigidbodyType2D.Kinematic;
-                    knifeRb.linearVelocity = Vector2.zero;
+                    knifeRb.linearVelocity = zeroVelocity;
                     knifeRb.angularVelocity = 0f;
                 }
             }
@@ -263,17 +248,17 @@ public class TargetCtrl : MonoBehaviour
     void StopKnivesRotation()
     {
         StuckObj[] stuckKnives = GetComponentsInChildren<StuckObj>();
-        foreach (StuckObj knife in stuckKnives)
+        for (int i = 0; i < stuckKnives.Length; i++)
         {
-            if (knife != null)
+            if (stuckKnives[i] != null)
             {
-                knife.transform.SetParent(null);
+                stuckKnives[i].transform.SetParent(null);
 
-                Rigidbody2D knifeRb = knife.GetComponent<Rigidbody2D>();
+                Rigidbody2D knifeRb = stuckKnives[i].GetComponent<Rigidbody2D>();
                 if (knifeRb != null)
                 {
                     knifeRb.bodyType = RigidbodyType2D.Kinematic;
-                    knifeRb.linearVelocity = Vector2.zero;
+                    knifeRb.linearVelocity = zeroVelocity;
                     knifeRb.angularVelocity = 0f;
                 }
             }
@@ -292,25 +277,20 @@ public class TargetCtrl : MonoBehaviour
         {
             col.enabled = false;
         }
+
         StuckObj[] stuckKnives = GetComponentsInChildren<StuckObj>();
-        foreach (StuckObj knife in stuckKnives)
+        for (int i = 0; i < stuckKnives.Length; i++)
         {
-            if (knife != null)
+            if (stuckKnives[i] != null)
             {
-                knife.transform.SetParent(null);
+                stuckKnives[i].transform.SetParent(null);
             }
         }
 
-        Sequence scaleSequence = DOTween.Sequence();
-
-        scaleSequence.Append(transform.DOScale(originalScale * scaleMultiplier, scaleDuration)
+        transform.DOScale(originalScale * scaleMultiplier, scaleDuration)
             .SetEase(Ease.OutBack)
-            .OnStart(() =>
-            {
-                LaunchKnives(stuckKnives);
-            }))
-            .Append(transform.DOScale(originalScale, scaleDuration)
-            .SetEase(Ease.InBack));
+            .OnStart(() => LaunchKnives(stuckKnives))
+            .OnComplete(() => transform.DOScale(originalScale, scaleDuration).SetEase(Ease.InBack));
     }
 
     public void StopRotationOnly()
@@ -324,12 +304,12 @@ public class TargetCtrl : MonoBehaviour
 
     void LaunchKnives(StuckObj[] knives)
     {
-        foreach (StuckObj knife in knives)
+        for (int i = 0; i < knives.Length; i++)
         {
-            if (knife != null)
+            if (knives[i] != null)
             {
-                Vector2 launchDirection = (knife.transform.position - transform.position).normalized;
-                knife.Launch(launchDirection, explosionForce);
+                Vector2 launchDirection = (knives[i].transform.position - transform.position).normalized;
+                knives[i].Launch(launchDirection, explosionForce);
             }
         }
     }

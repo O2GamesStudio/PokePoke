@@ -3,8 +3,14 @@ using System.Collections;
 
 public class TargetPoint : MonoBehaviour
 {
+    [Header("Rotation Settings")]
+    [SerializeField] float minRotationSpeed = 30f;
+    [SerializeField] float maxRotationSpeed = 120f;
+
     private bool isCompleted = false;
     private Collider2D pointCollider;
+    private WaitForFixedUpdate waitFixed;
+    private float rotationSpeed;
 
     void Awake()
     {
@@ -15,6 +21,10 @@ public class TargetPoint : MonoBehaviour
             ((CircleCollider2D)pointCollider).radius = 0.3f;
         }
         pointCollider.isTrigger = true;
+        waitFixed = new WaitForFixedUpdate();
+
+        rotationSpeed = Random.Range(minRotationSpeed, maxRotationSpeed);
+        if (Random.value > 0.5f) rotationSpeed *= -1f;
     }
 
     void Start()
@@ -22,9 +32,17 @@ public class TargetPoint : MonoBehaviour
         StartCoroutine(CheckOverlapNextFrame());
     }
 
+    void Update()
+    {
+        if (!isCompleted)
+        {
+            transform.Rotate(0f, 0f, rotationSpeed * Time.deltaTime);
+        }
+    }
+
     IEnumerator CheckOverlapNextFrame()
     {
-        yield return new WaitForFixedUpdate();
+        yield return waitFixed;
         CheckOverlapWithObstacles();
     }
 
@@ -32,11 +50,11 @@ public class TargetPoint : MonoBehaviour
     {
         Collider2D[] overlaps = Physics2D.OverlapCircleAll(transform.position, 0.5f);
 
-        foreach (Collider2D overlap in overlaps)
+        for (int i = 0; i < overlaps.Length; i++)
         {
-            if (overlap.CompareTag("StuckObj"))
+            if (overlaps[i].CompareTag("StuckObj"))
             {
-                StuckObj stuckObj = overlap.GetComponent<StuckObj>();
+                StuckObj stuckObj = overlaps[i].GetComponent<StuckObj>();
                 if (stuckObj != null && stuckObj.IsStuckToTarget())
                 {
                     CompletePoint();
@@ -59,16 +77,12 @@ public class TargetPoint : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D collision)
     {
-        if (isCompleted) return;
+        if (isCompleted || !collision.CompareTag("StuckObj")) return;
 
-        if (collision.CompareTag("StuckObj"))
+        StuckObj stuckObj = collision.GetComponent<StuckObj>();
+        if (stuckObj != null)
         {
-            Debug.Log(collision.transform.name);
-            StuckObj stuckObj = collision.GetComponent<StuckObj>();
-            if (stuckObj != null)
-            {
-                CompletePoint();
-            }
+            CompletePoint();
         }
     }
 }

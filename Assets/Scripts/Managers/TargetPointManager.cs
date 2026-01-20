@@ -1,4 +1,3 @@
-// TargetPointManager.cs
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -9,13 +8,15 @@ public class TargetPointManager : MonoBehaviour
     [SerializeField] private GameObject targetPointPrefab;
     [SerializeField] private TargetCtrl targetCharacter;
 
-    private List<TargetPoint> activePoints = new List<TargetPoint>();
+    private List<TargetPoint> activePoints = new List<TargetPoint>(10);
     private int completedPointsCount = 0;
     private int requiredPointsCount = 0;
 
     [Header("Spawn Settings")]
     [SerializeField] float pointOffset = 2f;
     [SerializeField] float minAngleGap = 30f;
+
+    private CircleCollider2D targetCollider;
 
     void Awake()
     {
@@ -33,55 +34,30 @@ public class TargetPointManager : MonoBehaviour
     {
         ClearAllPoints();
 
-        if (count <= 0 || targetCharacter == null)
-        {
-            return;
-        }
+        if (count <= 0 || targetCharacter == null) return;
 
         requiredPointsCount = count;
         completedPointsCount = 0;
 
-        CircleCollider2D targetCollider = targetCharacter.GetComponent<CircleCollider2D>();
-        float targetRadius = 1f;
-
-        if (targetCollider != null)
+        if (targetCollider == null)
         {
-            targetRadius = targetCollider.radius * targetCharacter.transform.localScale.x;
+            targetCollider = targetCharacter.GetComponent<CircleCollider2D>();
         }
 
-        List<float> usedAngles = new List<float>(occupiedAngles);
+        float targetRadius = targetCollider != null
+            ? targetCollider.radius * targetCharacter.transform.localScale.x
+            : 1f;
+
+        int occupiedCount = occupiedAngles.Count;
 
         for (int i = 0; i < count; i++)
         {
-            float angle = 0f;
-            bool validAngle = false;
-            int maxAttempts = 100;
-            int attempts = 0;
+            float angle = FindValidAngle(occupiedAngles, occupiedCount);
+            occupiedAngles.Add(angle);
+            occupiedCount++;
 
-            while (!validAngle && attempts < maxAttempts)
-            {
-                angle = Random.Range(0f, 360f);
-                validAngle = true;
-
-                foreach (float usedAngle in usedAngles)
-                {
-                    float angleDiff = Mathf.Abs(Mathf.DeltaAngle(angle, usedAngle));
-                    if (angleDiff < minAngleGap)
-                    {
-                        validAngle = false;
-                        break;
-                    }
-                }
-
-                attempts++;
-            }
-
-            usedAngles.Add(angle);
-
-            GameObject pointObj = Instantiate(targetPointPrefab);
+            GameObject pointObj = Instantiate(targetPointPrefab, targetCharacter.transform);
             pointObj.name = $"TargetPoint_{i}";
-
-            pointObj.transform.SetParent(targetCharacter.transform);
 
             Quaternion rotation = Quaternion.Euler(0, 0, angle);
             Vector3 direction = rotation * Vector3.up;
@@ -96,6 +72,31 @@ public class TargetPointManager : MonoBehaviour
         }
     }
 
+    float FindValidAngle(List<float> usedAngles, int count)
+    {
+        const int maxAttempts = 100;
+        float angle = Random.Range(0f, 360f);
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            bool valid = true;
+
+            for (int i = 0; i < count; i++)
+            {
+                if (Mathf.Abs(Mathf.DeltaAngle(angle, usedAngles[i])) < minAngleGap)
+                {
+                    valid = false;
+                    break;
+                }
+            }
+
+            if (valid) return angle;
+            angle = Random.Range(0f, 360f);
+        }
+
+        return angle;
+    }
+
     public void OnPointCompleted(TargetPoint point)
     {
         if (!activePoints.Contains(point)) return;
@@ -104,28 +105,19 @@ public class TargetPointManager : MonoBehaviour
         GameManager.Instance?.OnTargetPointCompleted();
     }
 
-    public bool AreAllPointsCompleted()
-    {
-        return completedPointsCount >= requiredPointsCount;
-    }
+    public bool AreAllPointsCompleted() => completedPointsCount >= requiredPointsCount;
 
-    public int GetCompletedCount()
-    {
-        return completedPointsCount;
-    }
+    public int GetCompletedCount() => completedPointsCount;
 
-    public int GetRequiredCount()
-    {
-        return requiredPointsCount;
-    }
+    public int GetRequiredCount() => requiredPointsCount;
 
     public void ClearAllPoints()
     {
-        foreach (var point in activePoints)
+        for (int i = activePoints.Count - 1; i >= 0; i--)
         {
-            if (point != null)
+            if (activePoints[i] != null)
             {
-                Destroy(point.gameObject);
+                Destroy(activePoints[i].gameObject);
             }
         }
 
@@ -137,5 +129,6 @@ public class TargetPointManager : MonoBehaviour
     public void SetTargetCharacter(TargetCtrl target)
     {
         targetCharacter = target;
+        targetCollider = null;
     }
 }
