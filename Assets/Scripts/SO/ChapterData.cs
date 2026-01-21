@@ -1,4 +1,3 @@
-// ChapterData.cs
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "New Chapter Data", menuName = "Game/Chapter Data")]
@@ -14,7 +13,7 @@ public class ChapterData : ScriptableObject
 
         [Header("Rotation Settings")]
         [HideInInspector] public float minStartSpeed = 0f;
-        [HideInInspector] public float maxStartSpeed = 80f;
+        [HideInInspector] public float maxStartSpeed = 100f;
         [HideInInspector] public float minSpeedChangeRate = 40f;
         [HideInInspector] public float maxSpeedChangeRate = 80f;
         public float minMaxSpeed = 80f;

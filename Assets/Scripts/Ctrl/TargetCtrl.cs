@@ -48,6 +48,8 @@ public class TargetCtrl : MonoBehaviour
 
     private enum RotationState { Accelerating, Holding, Decelerating, Waiting }
     private RotationState rotationState = RotationState.Accelerating;
+    private float maxAccelerationRatio;
+    private const float MIN_ACCELERATION_RATIO = 0.3f;
 
     private float holdTimer = 0f;
     private float targetHoldTime = 0f;
@@ -74,7 +76,7 @@ public class TargetCtrl : MonoBehaviour
         maxStartSpeed = settings.maxStartSpeed;
         minMaxSpeed = settings.minMaxSpeed;
         maxMaxSpeed = settings.maxMaxSpeed;
-        accelerationRatio = settings.accelerationRatio;
+        maxAccelerationRatio = settings.accelerationRatio;
         rotateClockwise = settings.rotateClockwise;
 
         minHoldTime = settings.minHoldTime;
@@ -98,7 +100,9 @@ public class TargetCtrl : MonoBehaviour
     {
         currentSpeed = Random.Range(minStartSpeed, maxStartSpeed);
         targetSpeed = Random.Range(minMaxSpeed, maxMaxSpeed);
-        currentSpeedChangeRate = targetSpeed * accelerationRatio;
+
+        float randomRatio = Random.Range(MIN_ACCELERATION_RATIO, maxAccelerationRatio);
+        currentSpeedChangeRate = targetSpeed * randomRatio;
 
         currentDirection = rotateClockwise ? -1f : 1f;
         if (Random.value > 0.5f)
@@ -173,7 +177,9 @@ public class TargetCtrl : MonoBehaviour
 
                     targetSpeed = Random.Range(minMaxSpeed, maxMaxSpeed);
                     currentSpeed = Random.Range(minStartSpeed, maxStartSpeed);
-                    currentSpeedChangeRate = targetSpeed * accelerationRatio;
+
+                    float randomRatio = Random.Range(MIN_ACCELERATION_RATIO, maxAccelerationRatio);
+                    currentSpeedChangeRate = targetSpeed * randomRatio;
 
                     rotationState = RotationState.Accelerating;
                 }

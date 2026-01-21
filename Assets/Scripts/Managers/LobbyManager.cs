@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -8,9 +9,11 @@ public class LobbyManager : MonoBehaviour
     [SerializeField] Image chapterImage, bgImage;
     [SerializeField] Button startBtn, infiniteModeBtn;
     [SerializeField] Button preBtn, nextBtn;
+    [SerializeField] float rotationDuration = 0.3f;
 
     int chapterNum = 0;
     [SerializeField] ChapterData[] chapterDatas;
+    bool isAnimating = false;
 
     void Awake()
     {
@@ -24,22 +27,38 @@ public class LobbyManager : MonoBehaviour
 
     void PreBtnOnClick()
     {
-        if (chapterDatas == null || chapterDatas.Length == 0) return;
+        if (isAnimating || chapterDatas == null || chapterDatas.Length == 0) return;
 
         chapterNum--;
         if (chapterNum < 0) chapterNum = chapterDatas.Length - 1;
 
-        UpdateChapterDisplay();
+        AnimateChapterChange();
     }
 
     void NextBtnOnClick()
     {
-        if (chapterDatas == null || chapterDatas.Length == 0) return;
+        if (isAnimating || chapterDatas == null || chapterDatas.Length == 0) return;
 
         chapterNum++;
         if (chapterNum >= chapterDatas.Length) chapterNum = 0;
 
-        UpdateChapterDisplay();
+        AnimateChapterChange();
+    }
+
+    void AnimateChapterChange()
+    {
+        isAnimating = true;
+
+        chapterImage.transform.DORotate(new Vector3(0, 90, 0), rotationDuration * 0.5f)
+            .SetEase(Ease.InOutQuad)
+            .OnComplete(() =>
+            {
+                UpdateChapterDisplay();
+
+                chapterImage.transform.DORotate(Vector3.zero, rotationDuration * 0.5f)
+                    .SetEase(Ease.InOutQuad)
+                    .OnComplete(() => isAnimating = false);
+            });
     }
 
     void UpdateChapterDisplay()
@@ -70,4 +89,9 @@ public class LobbyManager : MonoBehaviour
     }
 
     void InfiniteModeOnClick() { }
+
+    void OnDestroy()
+    {
+        chapterImage.transform.DOKill();
+    }
 }
