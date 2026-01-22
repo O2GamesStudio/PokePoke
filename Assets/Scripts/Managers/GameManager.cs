@@ -421,10 +421,9 @@ public class GameManager : MonoBehaviour
     {
         if (currentChapter == null) return;
 
-        int chapterIndex = System.Array.IndexOf(Resources.FindObjectsOfTypeAll<ChapterData>(), currentChapter);
-        if (chapterIndex < 0) return;
-
+        int chapterIndex = LobbyManager.LastPlayedChapterIndex;
         int savedStage = PlayerPrefs.GetInt($"Chapter_{chapterIndex}_HighestStage", 0);
+
         if (currentStageIndex + 1 > savedStage)
         {
             PlayerPrefs.SetInt($"Chapter_{chapterIndex}_HighestStage", currentStageIndex + 1);

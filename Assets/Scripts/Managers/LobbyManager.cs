@@ -2,10 +2,13 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 using TMPro;
+using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class LobbyManager : MonoBehaviour
 {
     public static ChapterData SelectedChapter { get; private set; }
+    public static int LastPlayedChapterIndex { get; private set; } = 0;
 
     [SerializeField] Image chapterImage, bgImage;
     [SerializeField] Button startBtn, infiniteModeBtn;
@@ -18,6 +21,10 @@ public class LobbyManager : MonoBehaviour
 
     void Awake()
     {
+        InitializeChapterProgress();
+
+        chapterNum = LastPlayedChapterIndex;
+
         startBtn.onClick.AddListener(StartOnClick);
         infiniteModeBtn.onClick.AddListener(InfiniteModeOnClick);
         preBtn.onClick.AddListener(PreBtnOnClick);
@@ -25,6 +32,31 @@ public class LobbyManager : MonoBehaviour
 
         UpdateChapterDisplay();
         UpdateHighestStageText();
+        UpdateNavigationButtons();
+    }
+
+    void Update()
+    {
+        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+        {
+            PlayerPrefs.DeleteAll();
+            SceneManager.LoadScene(0);
+        }
+    }
+
+    void InitializeChapterProgress()
+    {
+        if (chapterDatas == null) return;
+
+        for (int i = 0; i < chapterDatas.Length; i++)
+        {
+            string key = $"Chapter_{i}_HighestStage";
+            if (!PlayerPrefs.HasKey(key))
+            {
+                PlayerPrefs.SetInt(key, 0);
+            }
+        }
+        PlayerPrefs.Save();
     }
 
     void PreBtnOnClick()
@@ -57,6 +89,7 @@ public class LobbyManager : MonoBehaviour
             {
                 UpdateChapterDisplay();
                 UpdateHighestStageText();
+                UpdateNavigationButtons();
 
                 chapterImage.transform.DORotate(Vector3.zero, rotationDuration * 0.5f)
                     .SetEase(Ease.InOutQuad)
@@ -86,16 +119,54 @@ public class LobbyManager : MonoBehaviour
     {
         if (highestStageText == null || chapterDatas == null || chapterDatas.Length == 0) return;
 
-        int savedStage = PlayerPrefs.GetInt($"Chapter_{chapterNum}_HighestStage", 1);
-        highestStageText.text = $"Stage {savedStage}";
+        int savedStage = PlayerPrefs.GetInt($"Chapter_{chapterNum}_HighestStage", 0);
+        highestStageText.text = savedStage > 0 ? $"Stage {savedStage}" : "Stage 1";
+    }
+
+    void UpdateNavigationButtons()
+    {
+        if (chapterDatas == null || chapterDatas.Length <= 1)
+        {
+            if (preBtn != null) preBtn.interactable = false;
+            if (nextBtn != null) nextBtn.interactable = false;
+            return;
+        }
+
+        if (preBtn != null) preBtn.interactable = chapterNum > 0;
+
+        if (nextBtn != null)
+        {
+            bool canGoNext = chapterNum < chapterDatas.Length - 1;
+            if (canGoNext)
+            {
+                int currentChapterMaxStage = chapterDatas[chapterNum].TotalStages;
+                int clearedStage = PlayerPrefs.GetInt($"Chapter_{chapterNum}_HighestStage", 0);
+                canGoNext = clearedStage >= currentChapterMaxStage;
+            }
+            nextBtn.interactable = canGoNext;
+        }
     }
 
     void StartOnClick()
     {
-        if (chapterDatas != null && chapterDatas.Length > 0)
+        if (chapterDatas == null || chapterDatas.Length == 0) return;
+
+        int maxStage = chapterDatas[chapterNum].TotalStages;
+        int clearedStage = PlayerPrefs.GetInt($"Chapter_{chapterNum}_HighestStage", 0);
+
+        if (chapterNum > 0)
         {
-            SelectedChapter = chapterDatas[chapterNum];
+            int prevChapterMaxStage = chapterDatas[chapterNum - 1].TotalStages;
+            int prevChapterClearedStage = PlayerPrefs.GetInt($"Chapter_{chapterNum - 1}_HighestStage", 0);
+
+            if (prevChapterClearedStage < prevChapterMaxStage)
+            {
+                return;
+            }
         }
+
+        SelectedChapter = chapterDatas[chapterNum];
+        LastPlayedChapterIndex = chapterNum;
         SceneLoader.LoadGameScenes(1, 2);
     }
 
