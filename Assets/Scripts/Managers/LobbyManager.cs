@@ -1,3 +1,4 @@
+// LobbyManager.cs
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
@@ -7,8 +8,11 @@ using UnityEngine.SceneManagement;
 
 public class LobbyManager : MonoBehaviour
 {
+    public enum GameMode { Chapter, Infinite }
+
     public static ChapterData SelectedChapter { get; private set; }
     public static int LastPlayedChapterIndex { get; private set; } = 0;
+    public static GameMode SelectedGameMode { get; private set; } = GameMode.Chapter;
 
     [SerializeField] Image chapterImage, bgImage;
     [SerializeField] Button startBtn, infiniteModeBtn;
@@ -167,10 +171,15 @@ public class LobbyManager : MonoBehaviour
 
         SelectedChapter = chapterDatas[chapterNum];
         LastPlayedChapterIndex = chapterNum;
+        SelectedGameMode = GameMode.Chapter;
         SceneLoader.LoadGameScenes(1, 2);
     }
 
-    void InfiniteModeOnClick() { }
+    void InfiniteModeOnClick()
+    {
+        SelectedGameMode = GameMode.Infinite;
+        SceneLoader.LoadGameScenes(1, 2);
+    }
 
     void OnDestroy()
     {

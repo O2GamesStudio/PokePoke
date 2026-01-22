@@ -30,6 +30,10 @@ public class GameManager : MonoBehaviour
     [Header("Spawn Settings")]
     [SerializeField] float minDistanceFromTargetPoint = 30f;
 
+    [Header("Infinite Mode")]
+    private int infiniteKnifeCount = 0;
+    [SerializeField] ChapterData.StageSettings infiniteModeSettings;
+
     private StuckObj currentKnife;
     private bool isGameOver = false;
     private bool isGameActive = false;
@@ -59,7 +63,7 @@ public class GameManager : MonoBehaviour
         transitionWait = new WaitForSeconds(stageTransitionDelay);
         gameOverWait = new WaitForSeconds(gameOverDelay);
 
-        if (LobbyManager.SelectedChapter != null)
+        if (LobbyManager.SelectedGameMode == LobbyManager.GameMode.Chapter && LobbyManager.SelectedChapter != null)
         {
             currentChapter = LobbyManager.SelectedChapter;
         }
@@ -68,7 +72,17 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         isGameActive = true;
-        InitializeStage();
+
+        if (LobbyManager.SelectedGameMode == LobbyManager.GameMode.Infinite)
+        {
+            InitializeInfiniteMode();
+        }
+        else
+        {
+            InitializeStage();
+            UpdateStageText();
+        }
+
         SpawnNewKnife();
         UpdateUI();
 
@@ -85,6 +99,50 @@ public class GameManager : MonoBehaviour
             SkipToNextStage();
         }
     }
+    void InitializeInfiniteMode()
+    {
+        infiniteKnifeCount = 0;
+
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.SetInfiniteMode(true);
+        }
+
+        if (infiniteModeSettings.stuckObjPrefab != null)
+        {
+            currentStuckObjPrefab = infiniteModeSettings.stuckObjPrefab;
+        }
+
+        if (targetCharacter != null)
+        {
+            targetCharacter.InitializeStage(infiniteModeSettings);
+            if (targetCollider == null)
+            {
+                targetCollider = targetCharacter.GetComponent<CircleCollider2D>();
+            }
+        }
+
+        stuckAmount = 0;
+        isGameOver = false;
+
+        occupiedAngles.Clear();
+        SpawnObstacles(infiniteModeSettings.obstacleCount);
+
+        ApplyInfiniteModeVisuals();
+    }
+
+    void ApplyInfiniteModeVisuals()
+    {
+        if (targetCharacter != null && infiniteModeSettings.targetImage != null)
+        {
+            targetCharacter.GetComponent<SpriteRenderer>().sprite = infiniteModeSettings.targetImage;
+        }
+        if (UIManager.Instance != null && infiniteModeSettings.bgImage != null)
+        {
+            UIManager.Instance.UpdateBgImage(infiniteModeSettings.bgImage);
+        }
+    }
+
 
     void SkipToNextStage()
     {
@@ -251,7 +309,7 @@ public class GameManager : MonoBehaviour
 
     void UpdateStageText()
     {
-        if (UIManager.Instance != null)
+        if (LobbyManager.SelectedGameMode == LobbyManager.GameMode.Chapter && UIManager.Instance != null)
         {
             UIManager.Instance.UpdateStageText(currentStageIndex + 1);
         }
@@ -285,16 +343,27 @@ public class GameManager : MonoBehaviour
     {
         if (isGameOver) return;
 
-        stuckAmount++;
-        UpdateUI();
-
-        if (stuckAmount >= targetStuckVal)
+        if (LobbyManager.SelectedGameMode == LobbyManager.GameMode.Infinite)
         {
-            if (targetPointManager != null && !targetPointManager.AreAllPointsCompleted())
+            infiniteKnifeCount++;
+            if (UIManager.Instance != null)
             {
-                return;
+                UIManager.Instance.UpdateInfiniteCount(infiniteKnifeCount);
             }
-            StageComplete();
+        }
+        else
+        {
+            stuckAmount++;
+            UpdateUI();
+
+            if (stuckAmount >= targetStuckVal)
+            {
+                if (targetPointManager != null && !targetPointManager.AreAllPointsCompleted())
+                {
+                    return;
+                }
+                StageComplete();
+            }
         }
     }
 

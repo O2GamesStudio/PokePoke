@@ -38,6 +38,12 @@ public class UIManager : MonoBehaviour
     [SerializeField] GameObject targetPointIconPrefab;
     [SerializeField] Transform targetPointIconContainer;
 
+    [Header("Mode Settings")]
+    private bool isInfiniteMode = false;
+    [SerializeField] TextMeshProUGUI infiniteCountText;
+    [SerializeField] GameObject[] chapterModeObjects;
+    [SerializeField] GameObject[] infiniteModeObjects;
+
     private List<GameObject> targetPointIcons = new List<GameObject>(10);
 
     public CircleMaskController circleMask;
@@ -77,9 +83,62 @@ public class UIManager : MonoBehaviour
         continueBtn.transform.localScale = zeroScale;
     }
 
+    public void SetInfiniteMode(bool infinite)
+    {
+        isInfiniteMode = infinite;
+
+        if (stageText != null) stageText.gameObject.SetActive(!infinite);
+        if (targetImage != null) targetImage.gameObject.SetActive(!infinite);
+        if (targetText != null) targetText.gameObject.SetActive(!infinite);
+
+        if (infiniteCountText != null)
+        {
+            infiniteCountText.gameObject.SetActive(infinite);
+            if (infinite)
+            {
+                infiniteCountText.text = "0";
+            }
+        }
+
+        SetModeObjects(infinite);
+    }
+    void SetModeObjects(bool infinite)
+    {
+        if (chapterModeObjects != null)
+        {
+            for (int i = 0; i < chapterModeObjects.Length; i++)
+            {
+                if (chapterModeObjects[i] != null)
+                {
+                    chapterModeObjects[i].SetActive(!infinite);
+                }
+            }
+        }
+
+        if (infiniteModeObjects != null)
+        {
+            for (int i = 0; i < infiniteModeObjects.Length; i++)
+            {
+                if (infiniteModeObjects[i] != null)
+                {
+                    infiniteModeObjects[i].SetActive(infinite);
+                }
+            }
+        }
+    }
+
+    public void UpdateInfiniteCount(int count)
+    {
+        if (isInfiniteMode && infiniteCountText != null)
+        {
+            infiniteCountText.text = count.ToString();
+        }
+    }
+
+
     public void UpdateStageText(int stageNumber)
     {
-        if (stageText != null)
+        if (!isInfiniteMode && stageText != null)
         {
             stageText.text = "Stage " + stageNumber;
         }
@@ -143,6 +202,8 @@ public class UIManager : MonoBehaviour
 
     public void TargetUIUpdate(int targetVal, int nowVal)
     {
+        if (isInfiniteMode) return;
+
         int clampedVal = Mathf.Min(nowVal, targetVal);
         float targetFillAmount = (float)clampedVal / targetVal;
 
