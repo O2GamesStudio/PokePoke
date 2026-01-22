@@ -406,6 +406,8 @@ public class GameManager : MonoBehaviour
         isGameOver = true;
         isGameActive = false;
 
+        SaveHighestStage();
+
         DisableKnifeCollisions();
 
         if (targetCharacter != null)
@@ -414,6 +416,20 @@ public class GameManager : MonoBehaviour
         }
 
         StartCoroutine(FocusAfterExplosion());
+    }
+    void SaveHighestStage()
+    {
+        if (currentChapter == null) return;
+
+        int chapterIndex = System.Array.IndexOf(Resources.FindObjectsOfTypeAll<ChapterData>(), currentChapter);
+        if (chapterIndex < 0) return;
+
+        int savedStage = PlayerPrefs.GetInt($"Chapter_{chapterIndex}_HighestStage", 0);
+        if (currentStageIndex + 1 > savedStage)
+        {
+            PlayerPrefs.SetInt($"Chapter_{chapterIndex}_HighestStage", currentStageIndex + 1);
+            PlayerPrefs.Save();
+        }
     }
 
     void DisableKnifeCollisions()

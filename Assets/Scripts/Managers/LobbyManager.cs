@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
+using TMPro;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -10,7 +11,7 @@ public class LobbyManager : MonoBehaviour
     [SerializeField] Button startBtn, infiniteModeBtn;
     [SerializeField] Button preBtn, nextBtn;
     [SerializeField] float rotationDuration = 0.3f;
-
+    [SerializeField] TextMeshProUGUI highestStageText;
     int chapterNum = 0;
     [SerializeField] ChapterData[] chapterDatas;
     bool isAnimating = false;
@@ -23,6 +24,7 @@ public class LobbyManager : MonoBehaviour
         nextBtn.onClick.AddListener(NextBtnOnClick);
 
         UpdateChapterDisplay();
+        UpdateHighestStageText();
     }
 
     void PreBtnOnClick()
@@ -54,6 +56,7 @@ public class LobbyManager : MonoBehaviour
             .OnComplete(() =>
             {
                 UpdateChapterDisplay();
+                UpdateHighestStageText();
 
                 chapterImage.transform.DORotate(Vector3.zero, rotationDuration * 0.5f)
                     .SetEase(Ease.InOutQuad)
@@ -77,6 +80,14 @@ public class LobbyManager : MonoBehaviour
         {
             bgImage.sprite = currentChapter.ChapterBgImage;
         }
+    }
+
+    void UpdateHighestStageText()
+    {
+        if (highestStageText == null || chapterDatas == null || chapterDatas.Length == 0) return;
+
+        int savedStage = PlayerPrefs.GetInt($"Chapter_{chapterNum}_HighestStage", 1);
+        highestStageText.text = $"Stage {savedStage}";
     }
 
     void StartOnClick()
