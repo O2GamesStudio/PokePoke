@@ -13,7 +13,7 @@ public class LobbyManager : MonoBehaviour
     public static GameMode SelectedGameMode { get; private set; } = GameMode.Story;
     public static ChapterData[] AllChapters { get; private set; }
 
-    [SerializeField] Button startBtn, infiniteModeBtn;
+    [SerializeField] Button startBtn;
     [SerializeField] TextMeshProUGUI highestStageText;
     [SerializeField] ChapterData[] chapterDatas;
 
@@ -22,7 +22,6 @@ public class LobbyManager : MonoBehaviour
         AllChapters = chapterDatas;
 
         startBtn.onClick.AddListener(StartOnClick);
-        infiniteModeBtn.onClick.AddListener(InfiniteModeOnClick);
 
         UpdateHighestStageText();
     }

@@ -9,11 +9,13 @@ public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
 
-    [SerializeField] Button retryBtn, exitBtn, continueBtn;
+    [SerializeField] Button retryBtn, exitBtn, continueBtn, settingBtn;
     [SerializeField] Button nextBtn, exitWinBtn;
     [SerializeField] Button screenBtn;
     [SerializeField] Image bgImage;
     [SerializeField] Image targetImage;
+    [SerializeField] SettingPanel settingPanel;
+    [SerializeField] StageUISet stageUISet;
     [SerializeField] TextMeshProUGUI targetText;
     [SerializeField] TextMeshProUGUI stageText;
     [SerializeField] float fillDuration = 0.3f;
@@ -65,6 +67,7 @@ public class UIManager : MonoBehaviour
             return;
         }
 
+        settingBtn.onClick.AddListener(SettingOnClick);
         screenBtn.onClick.AddListener(ScreenOnClick);
         exitBtn.onClick.AddListener(ExitOnClick);
         retryBtn.onClick.AddListener(RetryOnClick);
@@ -101,6 +104,10 @@ public class UIManager : MonoBehaviour
         }
 
         SetModeObjects(infinite);
+    }
+    void SettingOnClick()
+    {
+        settingPanel.gameObject.SetActive(true);
     }
     void SetModeObjects(bool infinite)
     {
@@ -141,6 +148,11 @@ public class UIManager : MonoBehaviour
         if (!isInfiniteMode && stageText != null)
         {
             stageText.text = "Stage " + stageNumber;
+        }
+
+        if (!isInfiniteMode && stageUISet != null)
+        {
+            stageUISet.UpdateStageVisual(stageNumber);
         }
     }
 
