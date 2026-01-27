@@ -2490,8 +2490,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f99f3fa1e443fa4289956bb4fe29163, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GoogleAdmobManager
-  androidBannerAdUnitId: ca-app-pub-XXXXXXXXXXXXXXXX/BBBBBBBBBB
-  androidRewardedAdUnitId: ca-app-pub-XXXXXXXXXXXXXXXX/RRRRRRRRRR
 --- !u!1 &1677558897
 GameObject:
   m_ObjectHideFlags: 0

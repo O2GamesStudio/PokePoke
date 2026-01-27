@@ -1,3 +1,5 @@
+// TargetPoint.cs 수정
+
 using UnityEngine;
 using System.Collections;
 using Lean.Pool;
@@ -8,11 +10,16 @@ public class TargetPoint : MonoBehaviour, IPoolable
     [SerializeField] float minRotationSpeed = 30f;
     [SerializeField] float maxRotationSpeed = 120f;
 
+    [Header("Collision Settings")]
+    [SerializeField] float initialCollisionCheckDelay = 0.1f;
+
     private bool isCompleted = false;
     private bool isDespawning = false;
+    private bool canPlayAnimation = false;
     private Collider2D pointCollider;
     private WaitForFixedUpdate waitFixed;
     private float rotationSpeed;
+    private float spawnTime;
 
     void Awake()
     {
@@ -30,10 +37,13 @@ public class TargetPoint : MonoBehaviour, IPoolable
     {
         isCompleted = false;
         isDespawning = false;
+        canPlayAnimation = false;
+        spawnTime = Time.time;
         rotationSpeed = Random.Range(minRotationSpeed, maxRotationSpeed);
         if (Random.value > 0.5f) rotationSpeed *= -1f;
 
         StartCoroutine(CheckOverlapNextFrame());
+        StartCoroutine(EnableAnimationAfterDelay());
     }
 
     void IPoolable.OnDespawn()
@@ -41,6 +51,7 @@ public class TargetPoint : MonoBehaviour, IPoolable
         StopAllCoroutines();
         isCompleted = false;
         isDespawning = false;
+        canPlayAnimation = false;
     }
 
     void Update()
@@ -49,6 +60,12 @@ public class TargetPoint : MonoBehaviour, IPoolable
         {
             transform.Rotate(0f, 0f, rotationSpeed * Time.deltaTime);
         }
+    }
+
+    IEnumerator EnableAnimationAfterDelay()
+    {
+        yield return new WaitForSeconds(initialCollisionCheckDelay);
+        canPlayAnimation = true;
     }
 
     IEnumerator CheckOverlapNextFrame()
@@ -81,8 +98,24 @@ public class TargetPoint : MonoBehaviour, IPoolable
 
         isCompleted = true;
         isDespawning = true;
+
         TargetPointManager.Instance?.OnPointCompleted(this);
-        LeanPool.Despawn(gameObject);
+
+        SpriteAnimator animator = GetComponent<SpriteAnimator>();
+        if (animator != null && canPlayAnimation)
+        {
+            animator.PlayAnimation(() =>
+            {
+                if (gameObject != null)
+                {
+                    LeanPool.Despawn(gameObject);
+                }
+            });
+        }
+        else
+        {
+            LeanPool.Despawn(gameObject);
+        }
     }
 
     public bool IsCompleted => isCompleted;
@@ -94,7 +127,6 @@ public class TargetPoint : MonoBehaviour, IPoolable
         StuckObj stuckObj = collision.GetComponent<StuckObj>();
         if (stuckObj != null)
         {
-            Debug.Log(collision.transform.name);
             CompletePoint();
         }
     }

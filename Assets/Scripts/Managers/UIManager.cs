@@ -258,6 +258,7 @@ public class UIManager : MonoBehaviour
         }
     }
 
+
     public void RemoveTargetPointIcon()
     {
         if (targetPointIcons.Count == 0) return;
@@ -267,19 +268,25 @@ public class UIManager : MonoBehaviour
 
         if (iconToRemove != null)
         {
-            iconToRemove.transform.DOKill();
-            iconToRemove.transform.DOScale(0f, 0.3f)
-                .SetEase(Ease.InBack)
-                .OnComplete(() =>
+            SpriteAnimator animator = iconToRemove.GetComponent<SpriteAnimator>();
+            if (animator != null && animator.CanPlayAnimation())
+            {
+                animator.PlayAnimation(() =>
                 {
                     if (iconToRemove != null)
                     {
+                        iconToRemove.transform.DOKill();
                         Destroy(iconToRemove);
                     }
                 });
+            }
+            else
+            {
+                iconToRemove.transform.DOKill();
+                Destroy(iconToRemove);
+            }
         }
     }
-
     public void ClearTargetPointUI()
     {
         for (int i = targetPointIcons.Count - 1; i >= 0; i--)
