@@ -106,7 +106,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 366a21fb3f5714f47aad02a86bc16d1b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StuckObj
-  targetStickOffset: 1.3
+  targetStickOffset: 1.8
   borderStickOffset: -0.2
   stuckVFXPrefab: {fileID: 8779126222322074769, guid: 3678ed448ad6e0f40bb924277ae91f92, type: 3}
   hitTargetSFX: {fileID: 8300000, guid: adb795124c1237e4a8ef240a7beb8ee4, type: 3}

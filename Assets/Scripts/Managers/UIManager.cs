@@ -14,6 +14,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] Button screenBtn;
     [SerializeField] Image bgImage;
     [SerializeField] Image targetImage;
+    [SerializeField] Image chapterFinalImage;
     [SerializeField] SettingPanel settingPanel;
     [SerializeField] StageUISet stageUISet;
     [SerializeField] TextMeshProUGUI targetText;
@@ -162,7 +163,19 @@ public class UIManager : MonoBehaviour
             stageUISet.UpdateStageVisual(stageNumber);
         }
     }
+    public void UpdateChapterFinalImage(Sprite newSprite, Vector2 size)
+    {
+        if (chapterFinalImage != null && newSprite != null)
+        {
+            chapterFinalImage.sprite = newSprite;
 
+            RectTransform rectTransform = chapterFinalImage.GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                rectTransform.sizeDelta = size * 0.5f;
+            }
+        }
+    }
     public void ShowWinUI()
     {
         nextBtn.transform.localScale = zeroScale;

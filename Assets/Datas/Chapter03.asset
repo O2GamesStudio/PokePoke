@@ -15,6 +15,9 @@ MonoBehaviour:
   chapterName: "\uBC14\uB2E4"
   chapterNumber: 2
   chapterImage: {fileID: 21300000, guid: 77c30d366fd6636459fa3b7b4746a7dd, type: 3}
+  chapterFinalImageSettings:
+    image: {fileID: 21300000, guid: 11fa171c8aebd534e940df4483bfbb00, type: 3}
+    size: {x: 121, y: 83}
   chapterBgImage: {fileID: 21300000, guid: cfd65a04c0f631f4198148c691e83c36, type: 3}
   stages:
   - bgImage: {fileID: 21300000, guid: cfd65a04c0f631f4198148c691e83c36, type: 3}

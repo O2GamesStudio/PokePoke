@@ -340,6 +340,7 @@ MonoBehaviour:
   gameOverDelay: 0.1
   targetPointManager: {fileID: 1794058107}
   minDistanceFromTargetPoint: 30
+  spawnPositionOffset: {x: 0, y: 0.5, z: 0}
   infiniteModeSettings:
     bgImage: {fileID: 21300000, guid: 290ee2c4ea7ac34449892e07bcb33ac1, type: 3}
     targetImage: {fileID: 21300000, guid: 506410ddcb0a3bd46bb8eda8f05a349d, type: 3}
@@ -360,6 +361,8 @@ MonoBehaviour:
     requiredKnives: 100
     obstacleCount: 0
     targetPointCount: 0
+  baseOrthographicSize: 10
+  baseAspectRatio: 0.5625
 --- !u!1 &379653334
 GameObject:
   m_ObjectHideFlags: 0

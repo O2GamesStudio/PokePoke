@@ -106,8 +106,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b15689c161ff8694384e57ac52bf94eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TargetPoint
-  minRotationSpeed: 30
+  minRotationSpeed: 60
   maxRotationSpeed: 120
+  initialCollisionCheckDelay: 0.1
 --- !u!58 &7615171040337976042
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -163,6 +164,7 @@ MonoBehaviour:
   - {fileID: 4252598067350426806, guid: 3075533dd26a42442b278401268b1976, type: 3}
   - {fileID: 1325455519500884422, guid: 3075533dd26a42442b278401268b1976, type: 3}
   - {fileID: -6408660242103563509, guid: 3075533dd26a42442b278401268b1976, type: 3}
-  frameRate: 24
+  frameRate: 60
   isUI: 0
   loopAnimation: 0
+  initialDelay: 0.1

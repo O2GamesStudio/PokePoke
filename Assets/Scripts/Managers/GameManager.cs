@@ -31,6 +31,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Spawn Settings")]
     [SerializeField] float minDistanceFromTargetPoint = 30f;
+    [SerializeField] Vector3 spawnPositionOffset = Vector3.zero;
 
     [Header("Infinite Mode")]
     private int infiniteKnifeCount = 0;
@@ -373,7 +374,8 @@ public class GameManager : MonoBehaviour
     {
         if (isGameOver || !isGameActive || currentStuckObjPrefab == null || spawnPoint == null) return;
 
-        currentKnife = LeanPool.Spawn(currentStuckObjPrefab, spawnPoint.position, Quaternion.identity);
+        Vector3 finalSpawnPosition = spawnPoint.position + spawnPositionOffset;
+        currentKnife = LeanPool.Spawn(currentStuckObjPrefab, finalSpawnPosition, Quaternion.identity);
         if (currentKnife != null)
         {
             currentKnife.transform.localScale = Vector3.one * scaleFactor;
@@ -442,6 +444,36 @@ public class GameManager : MonoBehaviour
 
         StartCoroutine(TransitionToNextStage());
     }
+    ChapterData GetCurrentChapter()
+    {
+        int stageCounter = 0;
+        foreach (var chapter in allChapters)
+        {
+            if (currentGlobalStageIndex < stageCounter + chapter.TotalStages)
+            {
+                return chapter;
+            }
+            stageCounter += chapter.TotalStages;
+        }
+        return allChapters[0];
+    }
+
+
+    bool IsChapterTransition()
+    {
+        if (allChapters == null || allChapters.Length == 0) return false;
+
+        int stageCounter = 0;
+        foreach (var chapter in allChapters)
+        {
+            stageCounter += chapter.TotalStages;
+            if (currentGlobalStageIndex == stageCounter)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 
     IEnumerator TransitionToNextStage()
     {
@@ -451,6 +483,18 @@ public class GameManager : MonoBehaviour
         {
             AllStagesComplete();
             yield break;
+        }
+
+        if (IsChapterTransition())
+        {
+            ChapterData nextChapter = GetCurrentChapter();
+            if (UIManager.Instance != null && nextChapter.ChapterFinalImageSettings != null)
+            {
+                UIManager.Instance.UpdateChapterFinalImage(
+                    nextChapter.ChapterFinalImageSettings.image,
+                    nextChapter.ChapterFinalImageSettings.size
+                );
+            }
         }
 
         if (targetCharacter != null)

@@ -37,10 +37,18 @@ public class ChapterData : ScriptableObject
         public int targetPointCount = 0;
     }
 
+    [System.Serializable]
+    public class FinalImageSettings
+    {
+        public Sprite image;
+        public Vector2 size = new Vector2(200f, 200f);
+    }
+
     [Header("Chapter Info")]
     [SerializeField] private string chapterName;
     [SerializeField] private int chapterNumber;
     [SerializeField] private Sprite chapterImage;
+    [SerializeField] FinalImageSettings chapterFinalImageSettings;
     [SerializeField] private Sprite chapterBgImage;
 
     [Header("Stage Settings")]
@@ -48,6 +56,7 @@ public class ChapterData : ScriptableObject
 
     public string ChapterName => chapterName;
     public int ChapterNumber => chapterNumber;
+    public FinalImageSettings ChapterFinalImageSettings => chapterFinalImageSettings;
     public Sprite ChapterImage => chapterImage;
     public Sprite ChapterBgImage => chapterBgImage;
     public int TotalStages => stages.Length;
