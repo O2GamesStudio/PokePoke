@@ -21,6 +21,9 @@ public class StuckObj : MonoBehaviour, IPoolable
     [SerializeField] float fallRotationSpeed = 360f;
     [SerializeField] float despawnDelay = 3f;
 
+    [Header("TargetPoint Interaction")]
+    [SerializeField] float obstacleInteractionDelay = 0.15f;
+
     private Rigidbody2D rb;
     private Collider2D col;
     private bool isStuck = false;
@@ -30,9 +33,11 @@ public class StuckObj : MonoBehaviour, IPoolable
     private float cachedKnifeLength = -1f;
     private bool hasTriggeredGameOver = false;
     private bool isDespawning = false;
+    private bool canTriggerTargetPoint = true;
     private WaitForSeconds despawnWait;
     private static readonly Vector2 zeroVelocity = Vector2.zero;
     private Coroutine despawnCoroutine;
+    private Coroutine disableTargetPointCoroutine;
 
     void Awake()
     {
@@ -65,6 +70,12 @@ public class StuckObj : MonoBehaviour, IPoolable
         {
             StopCoroutine(despawnCoroutine);
             despawnCoroutine = null;
+        }
+
+        if (disableTargetPointCoroutine != null)
+        {
+            StopCoroutine(disableTargetPointCoroutine);
+            disableTargetPointCoroutine = null;
         }
 
         StopAllCoroutines();
@@ -104,11 +115,18 @@ public class StuckObj : MonoBehaviour, IPoolable
         isFalling = false;
         hasTriggeredGameOver = false;
         isDespawning = false;
+        canTriggerTargetPoint = true;
 
         if (despawnCoroutine != null)
         {
             StopCoroutine(despawnCoroutine);
             despawnCoroutine = null;
+        }
+
+        if (disableTargetPointCoroutine != null)
+        {
+            StopCoroutine(disableTargetPointCoroutine);
+            disableTargetPointCoroutine = null;
         }
 
         if (rb != null)
@@ -133,6 +151,7 @@ public class StuckObj : MonoBehaviour, IPoolable
     public void SetupAsObstacle()
     {
         isStuck = true;
+        canTriggerTargetPoint = true;
 
         if (rb != null)
         {
@@ -140,6 +159,19 @@ public class StuckObj : MonoBehaviour, IPoolable
             rb.linearVelocity = zeroVelocity;
             rb.angularVelocity = 0f;
         }
+
+        if (disableTargetPointCoroutine != null)
+        {
+            StopCoroutine(disableTargetPointCoroutine);
+        }
+        disableTargetPointCoroutine = StartCoroutine(DisableTargetPointInteractionAfterDelay());
+    }
+
+    IEnumerator DisableTargetPointInteractionAfterDelay()
+    {
+        yield return new WaitForSeconds(obstacleInteractionDelay);
+        canTriggerTargetPoint = false;
+        disableTargetPointCoroutine = null;
     }
 
     void TriggerStuckObjCollision(Vector2 contactPoint)
@@ -195,6 +227,21 @@ public class StuckObj : MonoBehaviour, IPoolable
         rb.linearVelocity = Vector2.up * force;
     }
 
+    void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (!canTriggerTargetPoint) return;
+        if (isLaunched || isFalling || hasTriggeredGameOver || isDespawning) return;
+
+        if (collision.CompareTag("TargetPoint"))
+        {
+            TargetPoint targetPoint = collision.GetComponent<TargetPoint>();
+            if (targetPoint != null && !targetPoint.IsCompleted)
+            {
+                targetPoint.CompletePoint();
+            }
+        }
+    }
+
     void OnCollisionEnter2D(Collision2D co)
     {
         if (isLaunched)
@@ -235,6 +282,7 @@ public class StuckObj : MonoBehaviour, IPoolable
     void StartFalling()
     {
         isFalling = true;
+        canTriggerTargetPoint = false;
         rb.gravityScale = fallGravityScale;
         rb.bodyType = RigidbodyType2D.Dynamic;
         rb.angularVelocity = fallRotationSpeed * (Random.value > 0.5f ? 1f : -1f);
@@ -284,6 +332,7 @@ public class StuckObj : MonoBehaviour, IPoolable
     {
         isStuck = true;
         isStuckToTarget = true;
+        canTriggerTargetPoint = false;
 
         ContactPoint2D contact = collision.GetContact(0);
         Vector2 hitPoint = contact.point;
@@ -333,6 +382,7 @@ public class StuckObj : MonoBehaviour, IPoolable
     {
         isLaunched = true;
         isStuck = false;
+        canTriggerTargetPoint = false;
 
         rb.bodyType = RigidbodyType2D.Dynamic;
         rb.gravityScale = 1;

@@ -1002,6 +1002,9 @@ MonoBehaviour:
   exitButtonScaleDuration: 0.5
   targetPointIconPrefab: {fileID: 305903368914214515, guid: b3d35e1d3706fac4591719e83f7bc9a9, type: 3}
   targetPointIconContainer: {fileID: 903072545}
+  iconSpacing: 70
+  repositionDuration: 0.3
+  repositionEase: 6
   infiniteCountText: {fileID: 1557763806}
   chapterModeObjects:
   - {fileID: 940002589}
@@ -3584,7 +3587,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColor: {r: 0.33333334, g: 0.21960786, b: 0.007843138, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:

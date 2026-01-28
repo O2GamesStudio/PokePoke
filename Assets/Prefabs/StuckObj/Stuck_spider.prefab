@@ -106,7 +106,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 366a21fb3f5714f47aad02a86bc16d1b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StuckObj
-  targetStickOffset: 1.7
+  targetStickOffset: 1.5
   borderStickOffset: -0.2
   stuckVFXPrefab: {fileID: 8779126222322074769, guid: ea31de63df3db194282f71229673d09c, type: 3}
   hitTargetSFX: {fileID: 8300000, guid: adb795124c1237e4a8ef240a7beb8ee4, type: 3}
@@ -114,6 +114,7 @@ MonoBehaviour:
   fallGravityScale: 1
   fallRotationSpeed: 360
   despawnDelay: 3
+  obstacleInteractionDelay: 0.15
 --- !u!50 &4806536573623460759
 Rigidbody2D:
   serializedVersion: 5

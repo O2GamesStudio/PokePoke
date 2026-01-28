@@ -40,6 +40,9 @@ public class UIManager : MonoBehaviour
     [Header("Target Point UI")]
     [SerializeField] GameObject targetPointIconPrefab;
     [SerializeField] Transform targetPointIconContainer;
+    [SerializeField] float iconSpacing = 20f;
+    [SerializeField] float repositionDuration = 0.3f;
+    [SerializeField] Ease repositionEase = Ease.OutQuad;
 
     [Header("Mode Settings")]
     private bool isInfiniteMode = false;
@@ -89,7 +92,6 @@ public class UIManager : MonoBehaviour
         exitWinBtn.transform.localScale = zeroScale;
     }
 
-
     public void SetInfiniteMode(bool infinite)
     {
         isInfiniteMode = infinite;
@@ -109,6 +111,7 @@ public class UIManager : MonoBehaviour
 
         SetModeObjects(infinite);
     }
+
     void SettingOnClick()
     {
         if (GameManager.Instance != null)
@@ -117,6 +120,7 @@ public class UIManager : MonoBehaviour
         }
         settingPanel.gameObject.SetActive(true);
     }
+
     void SetModeObjects(bool infinite)
     {
         if (chapterModeObjects != null)
@@ -150,7 +154,6 @@ public class UIManager : MonoBehaviour
         }
     }
 
-
     public void UpdateStageText(int stageNumber)
     {
         if (!isInfiniteMode && stageText != null)
@@ -163,19 +166,7 @@ public class UIManager : MonoBehaviour
             stageUISet.UpdateStageVisual(stageNumber);
         }
     }
-    public void UpdateChapterFinalImage(Sprite newSprite, Vector2 size)
-    {
-        if (chapterFinalImage != null && newSprite != null)
-        {
-            chapterFinalImage.sprite = newSprite;
 
-            RectTransform rectTransform = chapterFinalImage.GetComponent<RectTransform>();
-            if (rectTransform != null)
-            {
-                rectTransform.sizeDelta = size * 0.5f;
-            }
-        }
-    }
     public void ShowWinUI()
     {
         nextBtn.transform.localScale = zeroScale;
@@ -202,15 +193,33 @@ public class UIManager : MonoBehaviour
 
     public void ShowLoseUI()
     {
-        continueBtn.transform.localScale = zeroScale;
-        retryBtn.transform.localScale = zeroScale;
-        exitBtn.transform.localScale = zeroScale;
+        bool isInfinite = LobbyManager.SelectedGameMode == LobbyManager.GameMode.Infinite;
 
-        StartMainButtonScaleAnimation(continueBtn);
-        StartMainButtonScaleAnimation(retryBtn);
+        if (isInfinite)
+        {
+            retryBtn.transform.localScale = zeroScale;
+            exitBtn.transform.localScale = zeroScale;
 
-        DOVirtual.DelayedCall(scaleUpDuration + scaleDownDuration + exitButtonDelay,
-            () => StartExitButtonScaleAnimation(exitBtn));
+            Vector3 originalPos = retryBtn.transform.localPosition;
+            retryBtn.transform.localPosition = new Vector3(0f, originalPos.y, originalPos.z);
+
+            StartMainButtonScaleAnimation(retryBtn);
+
+            DOVirtual.DelayedCall(scaleUpDuration + scaleDownDuration + exitButtonDelay,
+                () => StartExitButtonScaleAnimation(exitBtn));
+        }
+        else
+        {
+            continueBtn.transform.localScale = zeroScale;
+            retryBtn.transform.localScale = zeroScale;
+            exitBtn.transform.localScale = zeroScale;
+
+            StartMainButtonScaleAnimation(continueBtn);
+            StartMainButtonScaleAnimation(retryBtn);
+
+            DOVirtual.DelayedCall(scaleUpDuration + scaleDownDuration + exitButtonDelay,
+                () => StartExitButtonScaleAnimation(exitBtn));
+        }
     }
 
     void StartMainButtonScaleAnimation(Button button)
@@ -232,6 +241,20 @@ public class UIManager : MonoBehaviour
         if (bgImage != null && newBgSprite != null)
         {
             bgImage.sprite = newBgSprite;
+        }
+    }
+
+    public void UpdateChapterFinalImage(Sprite newSprite, Vector2 size)
+    {
+        if (chapterFinalImage != null && newSprite != null)
+        {
+            chapterFinalImage.sprite = newSprite;
+
+            RectTransform rectTransform = chapterFinalImage.GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                rectTransform.sizeDelta = size * 0.4f;
+            }
         }
     }
 
@@ -264,13 +287,69 @@ public class UIManager : MonoBehaviour
 
         if (targetPointIconPrefab == null || targetPointIconContainer == null) return;
 
+        HorizontalLayoutGroup layoutGroup = targetPointIconContainer.GetComponent<HorizontalLayoutGroup>();
+        if (layoutGroup != null)
+        {
+            layoutGroup.enabled = false;
+        }
+
         for (int i = 0; i < count; i++)
         {
             GameObject icon = Instantiate(targetPointIconPrefab, targetPointIconContainer);
             targetPointIcons.Add(icon);
         }
+
+        RepositionIconsImmediate();
     }
 
+    void RepositionIconsImmediate()
+    {
+        int count = targetPointIcons.Count;
+        if (count == 0) return;
+
+        float totalWidth = (count - 1) * iconSpacing;
+        float startX = -totalWidth * 0.5f;
+
+        for (int i = 0; i < count; i++)
+        {
+            if (targetPointIcons[i] != null)
+            {
+                RectTransform rect = targetPointIcons[i].GetComponent<RectTransform>();
+                if (rect != null)
+                {
+                    rect.anchorMin = new Vector2(0.5f, 0.5f);
+                    rect.anchorMax = new Vector2(0.5f, 0.5f);
+                    rect.pivot = new Vector2(0.5f, 0.5f);
+                    rect.anchoredPosition = new Vector2(startX + i * iconSpacing, 0f);
+                }
+            }
+        }
+    }
+
+    void RepositionIconsSmooth()
+    {
+        int count = targetPointIcons.Count;
+        if (count == 0) return;
+
+        float totalWidth = (count - 1) * iconSpacing;
+        float startX = -totalWidth * 0.5f;
+
+        for (int i = 0; i < count; i++)
+        {
+            if (targetPointIcons[i] != null)
+            {
+                RectTransform rect = targetPointIcons[i].GetComponent<RectTransform>();
+                if (rect != null)
+                {
+                    rect.anchorMin = new Vector2(0.5f, 0.5f);
+                    rect.anchorMax = new Vector2(0.5f, 0.5f);
+                    rect.pivot = new Vector2(0.5f, 0.5f);
+                    Vector2 targetPos = new Vector2(startX + i * iconSpacing, 0f);
+                    rect.DOAnchorPos(targetPos, repositionDuration).SetEase(repositionEase);
+                }
+            }
+        }
+    }
 
     public void RemoveTargetPointIcon()
     {
@@ -291,15 +370,18 @@ public class UIManager : MonoBehaviour
                         iconToRemove.transform.DOKill();
                         Destroy(iconToRemove);
                     }
+                    RepositionIconsSmooth();
                 });
             }
             else
             {
                 iconToRemove.transform.DOKill();
                 Destroy(iconToRemove);
+                RepositionIconsSmooth();
             }
         }
     }
+
     public void ClearTargetPointUI()
     {
         for (int i = targetPointIcons.Count - 1; i >= 0; i--)

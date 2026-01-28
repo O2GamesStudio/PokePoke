@@ -1,5 +1,3 @@
-// TargetPoint.cs 수정
-
 using UnityEngine;
 using System.Collections;
 using Lean.Pool;
@@ -42,6 +40,11 @@ public class TargetPoint : MonoBehaviour, IPoolable
         rotationSpeed = Random.Range(minRotationSpeed, maxRotationSpeed);
         if (Random.value > 0.5f) rotationSpeed *= -1f;
 
+        if (pointCollider != null)
+        {
+            pointCollider.enabled = true;
+        }
+
         StartCoroutine(CheckOverlapNextFrame());
         StartCoroutine(EnableAnimationAfterDelay());
     }
@@ -80,19 +83,19 @@ public class TargetPoint : MonoBehaviour, IPoolable
 
         for (int i = 0; i < overlaps.Length; i++)
         {
-            if (overlaps[i].CompareTag("StuckObj"))
+            if (overlaps[i] == null || overlaps[i] == pointCollider) continue;
+            if (!overlaps[i].CompareTag("StuckObj")) continue;
+
+            StuckObj stuckObj = overlaps[i].GetComponent<StuckObj>();
+            if (stuckObj != null && stuckObj.IsStuckToTarget())
             {
-                StuckObj stuckObj = overlaps[i].GetComponent<StuckObj>();
-                if (stuckObj != null && stuckObj.IsStuckToTarget())
-                {
-                    CompletePoint();
-                    return;
-                }
+                CompletePoint();
+                return;
             }
         }
     }
 
-    void CompletePoint()
+    public void CompletePoint()
     {
         if (isCompleted || isDespawning) return;
 
@@ -119,15 +122,4 @@ public class TargetPoint : MonoBehaviour, IPoolable
     }
 
     public bool IsCompleted => isCompleted;
-
-    void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (isCompleted || isDespawning || !collision.CompareTag("StuckObj")) return;
-
-        StuckObj stuckObj = collision.GetComponent<StuckObj>();
-        if (stuckObj != null)
-        {
-            CompletePoint();
-        }
-    }
 }
