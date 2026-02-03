@@ -102,6 +102,7 @@ public class TargetPoint : MonoBehaviour, IPoolable
         isCompleted = true;
         isDespawning = true;
 
+        SoundManager.Instance?.PlayTargetPointCompleteSFX();
         TargetPointManager.Instance?.OnPointCompleted(this);
 
         SpriteAnimator animator = GetComponent<SpriteAnimator>();

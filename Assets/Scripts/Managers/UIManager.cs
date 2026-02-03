@@ -18,6 +18,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] SettingPanel settingPanel;
     [SerializeField] StageUISet stageUISet;
     [SerializeField] TextMeshProUGUI targetText;
+    [SerializeField] TextMeshProUGUI continueCountText;
     [SerializeField] TextMeshProUGUI stageText;
     [SerializeField] float fillDuration = 0.3f;
     [SerializeField] Ease fillEase = Ease.OutQuad;
@@ -49,6 +50,10 @@ public class UIManager : MonoBehaviour
     [SerializeField] TextMeshProUGUI infiniteCountText;
     [SerializeField] GameObject[] chapterModeObjects;
     [SerializeField] GameObject[] infiniteModeObjects;
+
+    [Header("SFX")]
+    [SerializeField] AudioClip startClickClip;
+    [SerializeField] AudioClip buttonClickClip;
 
     private List<GameObject> targetPointIcons = new List<GameObject>(10);
 
@@ -114,6 +119,7 @@ public class UIManager : MonoBehaviour
 
     void SettingOnClick()
     {
+        SoundManager.Instance?.PlaySFX(buttonClickClip);
         if (GameManager.Instance != null)
         {
             GameManager.Instance.PauseGame();
@@ -214,11 +220,23 @@ public class UIManager : MonoBehaviour
             retryBtn.transform.localScale = zeroScale;
             exitBtn.transform.localScale = zeroScale;
 
+            int remaining = GameManager.maxContinueCount - GameManager.Instance.ContinueCount;
+            continueBtn.interactable = remaining > 0;
+            UpdateContinueCountText(remaining);
+
             StartMainButtonScaleAnimation(continueBtn);
             StartMainButtonScaleAnimation(retryBtn);
 
             DOVirtual.DelayedCall(scaleUpDuration + scaleDownDuration + exitButtonDelay,
                 () => StartExitButtonScaleAnimation(exitBtn));
+        }
+    }
+    public void UpdateContinueCountText(int remaining)
+    {
+        if (continueCountText != null)
+        {
+            continueCountText.text = remaining + "/" + GameManager.maxContinueCount;
+            continueBtn.interactable = remaining > 0;
         }
     }
 
@@ -397,6 +415,7 @@ public class UIManager : MonoBehaviour
 
     void ContinueOnClick()
     {
+        SoundManager.Instance?.PlaySFX(buttonClickClip);
         if (GameManager.Instance != null)
         {
             GameManager.Instance.OnContinueButtonPressed();
@@ -412,16 +431,21 @@ public class UIManager : MonoBehaviour
         continueBtn.transform.localScale = zeroScale;
     }
 
-    void NextOnClick() { }
+    void NextOnClick()
+    {
+        SoundManager.Instance?.PlaySFX(buttonClickClip);
+    }
 
     void ExitOnClick()
     {
+        SoundManager.Instance?.PlaySFX(buttonClickClip);
         DOTween.KillAll();
         SceneLoader.LoadSingleScene(0);
     }
 
     void RetryOnClick()
     {
+        SoundManager.Instance?.PlaySFX(buttonClickClip);
         DOTween.KillAll();
 
         int scene1Index = -1;
@@ -444,5 +468,8 @@ public class UIManager : MonoBehaviour
         SceneLoader.LoadGameScenes(scene1Index, scene2Index);
     }
 
-    void ScreenOnClick() => GameManager.Instance?.OnClick();
+    void ScreenOnClick()
+    {
+        GameManager.Instance?.OnClick();
+    }
 }

@@ -1901,8 +1901,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4281479730
-  m_fontColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+    rgba: 4278335573
+  m_fontColor: {r: 0.33333334, g: 0.21960786, b: 0.007843138, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -3041,12 +3041,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SoundManager
   initialPoolSize: 10
   maxPoolSize: 30
-  targetPointCompleteClip: {fileID: 0}
-  stageCompleteClip: {fileID: 0}
+  targetPointCompleteClip: {fileID: 8300000, guid: e49562de2e32a814a8e219418b2d0cf8, type: 3}
+  stageCompleteClip: {fileID: 8300000, guid: 9b519a343c321d6468632edd0a2474e5, type: 3}
   gameOverClip: {fileID: 0}
-  buttonClickClip: {fileID: 0}
-  uiClickClip: {fileID: 0}
-  gameBGM: {fileID: 0}
+  buttonClickClip: {fileID: 8300000, guid: 8bc88572da876134fb0e193ecf06c16d, type: 3}
+  uiClickClip: {fileID: 8300000, guid: 8bc88572da876134fb0e193ecf06c16d, type: 3}
+  gameBGM: {fileID: 8300000, guid: 35481450b9ca2de4e883fbb8e5a3ac4d, type: 3}
   menuBGM: {fileID: 0}
 --- !u!1 &1891319008
 GameObject:

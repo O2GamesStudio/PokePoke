@@ -88,6 +88,7 @@ public class LobbyManager : MonoBehaviour
 
     void NextModeOnClick()
     {
+        SoundManager.Instance?.PlayButtonClickSFX();
         if (SelectedGameMode == GameMode.Story)
         {
             SelectedGameMode = GameMode.Infinite;
@@ -97,6 +98,7 @@ public class LobbyManager : MonoBehaviour
 
     void PrevModeOnClick()
     {
+        SoundManager.Instance?.PlayButtonClickSFX();
         if (SelectedGameMode == GameMode.Infinite)
         {
             SelectedGameMode = GameMode.Story;
@@ -126,6 +128,7 @@ public class LobbyManager : MonoBehaviour
 
     void StartOnClick()
     {
+        SoundManager.Instance?.PlayButtonClickSFX();
         SceneLoader.LoadGameScenes(1, 2);
     }
 }

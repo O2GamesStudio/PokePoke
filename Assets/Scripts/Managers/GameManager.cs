@@ -54,6 +54,9 @@ public class GameManager : MonoBehaviour
     private WaitForSeconds gameOverWait;
     private List<float> occupiedAngles = new List<float>(20);
     private Camera mainCam;
+    public int ContinueCount => continueCount;
+    private int continueCount = 0;
+    public const int maxContinueCount = 3;
 
     void Awake()
     {
@@ -430,7 +433,7 @@ public class GameManager : MonoBehaviour
     void StageComplete()
     {
         isGameActive = false;
-
+        SoundManager.Instance?.PlayStageCompleteSFX();
         if (currentKnife != null)
         {
             LeanPool.Despawn(currentKnife);
@@ -608,9 +611,9 @@ public class GameManager : MonoBehaviour
     {
         isGameOver = true;
         isGameActive = false;
+        SoundManager.Instance?.PlayGameOverSFX();
 
         SaveHighestStage();
-
         DisableKnifeCollisions();
 
         if (targetCharacter != null)
@@ -698,6 +701,18 @@ public class GameManager : MonoBehaviour
 
     public void OnContinueButtonPressed()
     {
+        if (continueCount >= maxContinueCount)
+        {
+            return;
+        }
+
+        continueCount++;
+
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdateContinueCountText(maxContinueCount - continueCount);
+        }
+
         if (GoogleAdmobManager.Instance != null)
         {
             if (GoogleAdmobManager.Instance.IsRewardedAdReady())

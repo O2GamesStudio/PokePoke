@@ -109,7 +109,7 @@ MonoBehaviour:
   targetStickOffset: 1.5
   borderStickOffset: -0.2
   stuckVFXPrefab: {fileID: 8779126222322074769, guid: ea31de63df3db194282f71229673d09c, type: 3}
-  hitTargetSFX: {fileID: 8300000, guid: adb795124c1237e4a8ef240a7beb8ee4, type: 3}
+  hitTargetSFX: {fileID: 8300000, guid: 8b7bfc6fc530b5240b323f283da8080a, type: 3}
   hitKnifeSFX: {fileID: 8300000, guid: 2b8a72c87a6e2f44a857cf2686825c89, type: 3}
   fallGravityScale: 1
   fallRotationSpeed: 360

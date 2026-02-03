@@ -52,8 +52,9 @@ public class SoundManager : MonoBehaviour
     {
         for (int i = 0; i < initialPoolSize; i++)
         {
-            CreateNewAudioSource();
+            audioSourcePool.Enqueue(CreateNewAudioSource());
         }
+
         bgmSource = gameObject.AddComponent<AudioSource>();
         bgmSource.loop = true;
         bgmSource.volume = 1f;
@@ -61,6 +62,8 @@ public class SoundManager : MonoBehaviour
 
         isSoundEnabled = PlayerPrefs.GetInt("IsSoundOn", 1) == 1;
         isMusicEnabled = PlayerPrefs.GetInt("IsMusicOn", 1) == 1;
+
+        PlayBGM(gameBGM);
     }
 
     AudioSource CreateNewAudioSource()
@@ -267,6 +270,7 @@ public class SoundManager : MonoBehaviour
 
         bgmSource.clip = clip;
         bgmSource.loop = true;
+        bgmSource.volume = 0.5f;
         bgmSource.Play();
     }
 
