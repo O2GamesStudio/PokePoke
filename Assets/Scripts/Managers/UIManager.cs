@@ -10,7 +10,7 @@ public class UIManager : MonoBehaviour
     public static UIManager Instance { get; private set; }
 
     [SerializeField] Button retryBtn, exitBtn, continueBtn, settingBtn;
-    [SerializeField] Button nextBtn, exitWinBtn;
+    [SerializeField] Button exitWinBtn;
     [SerializeField] Button screenBtn;
     [SerializeField] Image bgImage;
     [SerializeField] Image targetImage;
@@ -82,18 +82,14 @@ public class UIManager : MonoBehaviour
         retryBtn.onClick.AddListener(RetryOnClick);
         continueBtn.onClick.AddListener(ContinueOnClick);
         exitWinBtn.onClick.AddListener(ExitOnClick);
-        nextBtn.onClick.AddListener(NextOnClick);
 
-        nextBtnHiddenPos = nextBtn.transform.localPosition;
         exitWinBtnHiddenPos = exitWinBtn.transform.localPosition;
 
-        nextBtnTargetPos = nextBtnHiddenPos + new Vector3(0, buttonMoveDistance, 0);
-        exitWinBtnTargetPos = exitWinBtnHiddenPos + new Vector3(0, buttonMoveDistance, 0);
+        exitWinBtnTargetPos = exitWinBtnHiddenPos + new Vector3(0, buttonMoveDistance + 100, 0);
 
         retryBtn.transform.localScale = zeroScale;
         exitBtn.transform.localScale = zeroScale;
         continueBtn.transform.localScale = zeroScale;
-        nextBtn.transform.localScale = zeroScale;
         exitWinBtn.transform.localScale = zeroScale;
     }
 
@@ -175,18 +171,7 @@ public class UIManager : MonoBehaviour
 
     public void ShowWinUI()
     {
-        nextBtn.transform.localScale = zeroScale;
         exitWinBtn.transform.localScale = zeroScale;
-
-        nextBtn.transform.DOScale(1f, buttonMoveDuration)
-            .SetEase(Ease.OutBack)
-            .OnComplete(() =>
-            {
-                nextBtn.transform.DOLocalMove(nextBtnTargetPos, buttonMoveDuration)
-                    .SetEase(buttonMoveEase)
-                    .OnComplete(() => StartButtonBounce(nextBtn, nextBtnTargetPos));
-            });
-
         exitWinBtn.transform.DOScale(1f, buttonMoveDuration)
             .SetEase(Ease.OutBack)
             .OnComplete(() =>

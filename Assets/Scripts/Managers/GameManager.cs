@@ -128,10 +128,7 @@ public class GameManager : MonoBehaviour
         SpawnNewKnife();
         UpdateUI();
 
-        if (GoogleAdmobManager.Instance != null)
-        {
-            GoogleAdmobManager.Instance.LoadBannerAd();
-        }
+        UnityAdsManager.Instance.LoadBannerAd();
     }
 
     void Update()
@@ -713,19 +710,12 @@ public class GameManager : MonoBehaviour
             UIManager.Instance.UpdateContinueCountText(maxContinueCount - continueCount);
         }
 
-        if (GoogleAdmobManager.Instance != null)
+        if (UnityAdsManager.Instance.IsRewardedAdReady())
         {
-            if (GoogleAdmobManager.Instance.IsRewardedAdReady())
-            {
-                GoogleAdmobManager.Instance.ShowRewardedAd(
-                    onCompleted: ContinueGameAfterAd,
-                    onFailed: null
-                );
-            }
-            else
-            {
-                ContinueGameAfterAd();
-            }
+            UnityAdsManager.Instance.ShowRewardedAd(
+                onCompleted: ContinueGameAfterAd,
+                onFailed: null
+            );
         }
         else
         {
